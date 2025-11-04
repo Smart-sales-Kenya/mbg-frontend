@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    --primary: 215 45% 25%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 215 45% 20%;
+
+    --secondary: 215 15% 92%;
+    --secondary-foreground: 215 25% 15%;
+
+    --muted: 215 15% 96%;
+    --muted-foreground: 215 15% 45%;
+
+    /* Changed to mustard yellow */
+    --accent: 45 90% 50%;
+    --accent-foreground: 0 0% 10%;
+    --accent-hover: 45 90% 45%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 215 15% 88%;
+    --input: 215 15% 88%;
+    --ring: 215 45% 25%;
+
+    --radius: 0.5rem;
+
+    --gradient-hero: linear-gradient(135deg, hsl(210, 20%, 4%) 0%, hsl(210, 7%, 6%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(45 90% 50%) 0%, hsl(45 90% 60%) 100%);
+    --shadow-elegant: 0 10px 40px -10px hsla(215, 64%, 49%, 0.2);
+    --shadow-hover: 0 20px 50px -10px hsla(215, 45%, 42%, 0.3);
+  }
+
+  .dark {
+    --background: 215 25% 10%;
+    --foreground: 0 0% 95%;
+
+    --card: 215 25% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 215 25% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 215 45% 70%;
+    --primary-foreground: 215 25% 10%;
+    --primary-hover: 215 45% 75%;
+
+    --secondary: 215 20% 20%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 215 20% 18%;
+    --muted-foreground: 215 15% 65%;
+
+    /* Mustard yellow for dark mode */
+    --accent: 45 90% 55%;
+    --accent-foreground: 0 0% 10%;
+    --accent-hover: 45 90% 60%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 215 20% 22%;
+    --input: 215 20% 22%;
+    --ring: 215 45% 70%;
+  }
+}
+
+@layer utilities {
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+  
+  .shadow-hover {
+    box-shadow: var(--shadow-hover);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
