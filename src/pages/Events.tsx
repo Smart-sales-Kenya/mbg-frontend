@@ -288,41 +288,55 @@ const Events = () => {
       </section>
 
       {/* Monthly Programs */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Monthly Training Programs
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              We run regular monthly programs to ensure continuous learning opportunities. 
-              Our 16-week sales program starts every quarter, with monthly workshops and webinars 
-              scheduled throughout the year.
-            </p>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="shadow-elegant">
-                <CardContent className="pt-6">
-                  <h3 className="text-xl font-semibold mb-3">Quarterly Programs</h3>
-                  <ul className="text-sm text-muted-foreground space-y-2 text-left">
-                    <li>• 16-Week Sales Program (Jan, Apr, Jul, Oct)</li>
-                    <li>• 6-Month Strategic Transformation (Jan, Jul)</li>
-                  </ul>
-                </CardContent>
-              </Card>
-              <Card className="shadow-elegant">
-                <CardContent className="pt-6">
-                  <h3 className="text-xl font-semibold mb-3">Monthly Events</h3>
-                  <ul className="text-sm text-muted-foreground space-y-2 text-left">
-                    <li>• Sales Process Workshops</li>
-                    <li>• Leadership Webinars</li>
-                    <li>• Networking Events</li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
+<section className="py-20">
+  <div className="container mx-auto px-4">
+    <div className="max-w-3xl mx-auto text-center">
+      <h2 className="text-3xl md:text-4xl font-bold mb-6">
+        Seasonal Programs
+      </h2>
+      <p className="text-lg text-muted-foreground mb-8">
+        We run regular monthly programs to ensure continuous learning opportunities. 
+        Our 16-week sales program starts every quarter, with monthly workshops and webinars 
+        scheduled throughout the year.
+      </p>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="shadow-elegant">
+          <CardContent className="pt-6">
+            <h3 className="text-xl font-semibold mb-3">Quarterly Programs</h3>
+            <ul className="text-sm text-muted-foreground space-y-2 text-left">
+              <li>• 16-Week Sales Program (Jan, Apr, Jul, Oct)</li>
+              <li>• 6-Month Strategic Transformation (Jan, Jul)</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-elegant">
+          <CardContent className="pt-6">
+            <h3 className="text-xl font-semibold mb-3">Monthly Events</h3>
+            <ul className="text-sm text-muted-foreground space-y-2 text-left">
+              <li>• Sales Process Workshops</li>
+              <li>• Leadership Webinars</li>
+              <li>• Networking Events</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-elegant">
+          <CardContent className="pt-6">
+            <h3 className="text-xl font-semibold mb-3">Annual Events</h3>
+            <ul className="text-sm text-muted-foreground space-y-2 text-left">
+              <li>• <span className="font-semibold text-primary">SPENCON</span> — Sales Planning and Execution Conference</li>
+              <li>• Brings together top sales leaders and professionals across Africa</li>
+              <li>• Focused on strategy, innovation, and performance excellence</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 
 

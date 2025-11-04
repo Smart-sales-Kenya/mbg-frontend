@@ -51,7 +51,7 @@ const Contact = () => {
       setCsrfToken(token);
     } else {
       // Optional: request CSRF token from Django endpoint
-      fetch("https://smartsales.co.ke/api/get-csrf-token/", {
+      fetch("http://127.0.0.1:8000/api/get-csrf-token/", {
         credentials: "include",
       })
         .then((res) => res.json())
@@ -70,7 +70,7 @@ const Contact = () => {
 
     try {
       setLoading(true);
-      const response = await fetch("https://smartsales.co.ke/api/contact/", {
+      const response = await fetch("http://127.0.0.1:8000/api/contact/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -134,7 +134,7 @@ const Contact = () => {
               title: "Phone",
               text: (
                 <>
-                  +254 700 000 000<br />+254 711 000 000
+                  Edward +254 734 516 091 <br />Terrence +254 707 955 317
                 </>
               )
             },
@@ -143,7 +143,7 @@ const Contact = () => {
               title: "Email",
               text: (
                 <>
-                  info@mbgrowth.co.ke<br />training@mbgrowth.co.ke
+                  info@smartsales.co.ke<br /> info@smartsales.co.ke
                 </>
               )
             },
