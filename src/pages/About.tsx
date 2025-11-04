@@ -43,8 +43,8 @@ const About = () => {
   ];
 
 const partners = Array.from({ length: 19 }, (_, i) => ({
-  logo: `/src/assets/Picture${i + 1}.${[6, 15].includes(i + 1) ? "jpg" : "png"}`,
-  alt: `Partner ${i + 1} Logo`,
+  logo: `/partners/Picture${i + 1}.${[6, 15].includes(i + 1) ? "jpg" : "png"}`,
+  alt: `Partner logo ${i + 1}`,
 }));
 
 

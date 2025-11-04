@@ -10,6 +10,8 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import logo from "@/assets/logo.jpg";
+
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,14 +23,15 @@ const Navigation = () => {
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <img
-                src="src/assets/logo.jpg"
-                alt="MBG Logo"
-                className="h-10 w-auto object-contain"
-              />
-            </Link>
+
+<Link to="/" className="flex items-center space-x-2">
+  <img
+    src={logo}
+    alt="MBG Logo"
+    className="h-10 w-auto object-contain"
+  />
+</Link>
+
 
 
           {/* Desktop Navigation */}
