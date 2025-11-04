@@ -7,6 +7,8 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/autoplay";
+import ceoImage from "@/assets/ceo-edward-ndegwa.jpg";
+
 
 const About = () => {
   const values = [
@@ -164,13 +166,13 @@ const partners = Array.from({ length: 19 }, (_, i) => ({
               </h2>
               <div className="grid md:grid-cols-3 gap-8 items-center">
                 {/* CEO Image */}
-                <div className="flex justify-center md:justify-start">
-                  <img
-                    src="src/assets/ceo-edward-ndegwa.jpg" // Replace with your actual image path
-                    alt="Edward Ndegwa - CEO"
-                    className="rounded-2xl shadow-lg w-64 h-64 object-cover border-4 border-primary/20"
-                  />
-                </div>
+               <div className="flex justify-center md:justify-start">
+                    <img
+                      src={ceoImage}
+                      alt="Edward Ndegwa - CEO"
+                      className="rounded-2xl shadow-lg w-64 h-64 object-cover border-4 border-primary/20"
+                    />
+                  </div>
 
                 {/* CEO Text */}
                 <div className="md:col-span-2">
