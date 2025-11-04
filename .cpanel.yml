@@ -1,0 +1,13 @@
+deployment:
+  tasks:
+    # Set the path where the production files will be deployed
+    - export DEPLOYPATH=/home/smartsa1/public_html
+
+    # Install Node.js dependencies
+    - /opt/cpanel/ea-nodejs20/bin/npm install
+
+    # Build the React (Vite) app
+    - /opt/cpanel/ea-nodejs20/bin/npm run build
+
+    # Copy the built files from the 'dist' folder to your public_html directory
+    - /bin/cp -R dist/* $DEPLOYPATH/
