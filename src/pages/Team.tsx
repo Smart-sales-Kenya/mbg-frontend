@@ -4,20 +4,23 @@ import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Linkedin, Mail } from "lucide-react";
 
+// ✅ Use .env variable
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const Team = () => {
-  const [leadership, setLeadership] = useState([]);
-  const [supportTeam, setSupportTeam] = useState([]);
+  const [leadership, setLeadership] = useState<any[]>([]);
+  const [supportTeam, setSupportTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTeam = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/team/");
+        const response = await fetch(`${API_BASE_URL}/api/team/`);
         if (!response.ok) throw new Error("Failed to fetch team data");
         const data = await response.json();
 
-        const leaders = data.filter((m) => m.category === "leadership");
-        const support = data.filter((m) => m.category === "support");
+        const leaders = data.filter((m: any) => m.category === "leadership");
+        const support = data.filter((m: any) => m.category === "support");
 
         setLeadership(leaders);
         setSupportTeam(support);
@@ -31,14 +34,7 @@ const Team = () => {
     fetchTeam();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
-        Loading team members...
-      </div>
-    );
-  }
-
+ 
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />

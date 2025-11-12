@@ -3,11 +3,9 @@ import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Play } from "lucide-react";
 import axios from "axios";
 
-// ✅ Use environment variable for security
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Gallery = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -15,14 +13,12 @@ const Gallery = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Fetch categories and default items
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/gallery/categories/`);
         setCategories(res.data);
 
-        // Automatically load first category
         if (res.data.length > 0) {
           setActiveCategory(res.data[0].slug);
           fetchItems(res.data[0].slug);
@@ -31,7 +27,6 @@ const Gallery = () => {
         console.error("Error fetching categories:", err);
       }
     };
-
     fetchCategories();
   }, []);
 
@@ -45,7 +40,7 @@ const Gallery = () => {
   };
 
   const renderGalleryGrid = (images: any[]) => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {images.map((item, index) => (
         <Card
           key={index}
@@ -88,7 +83,8 @@ const Gallery = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <Tabs defaultValue={activeCategory || ""} value={activeCategory || ""} className="w-full">
-            <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-5 mb-12">
+            {/* Responsive Tabs List */}
+            <TabsList className="flex overflow-x-auto no-scrollbar gap-4 mb-12 px-2 sm:px-0">
               {categories.map((cat) => (
                 <TabsTrigger
                   key={cat.slug}
@@ -97,6 +93,7 @@ const Gallery = () => {
                     setActiveCategory(cat.slug);
                     fetchItems(cat.slug);
                   }}
+                  className="whitespace-nowrap flex-shrink-0"
                 >
                   {cat.name}
                 </TabsTrigger>

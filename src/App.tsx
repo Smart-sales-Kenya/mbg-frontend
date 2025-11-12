@@ -4,17 +4,25 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import EventDetails from "./pages/EventDetails";
+
+
 // Page imports
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Programs from "./pages/Programs";
+import RegisterProgram from "./pages/RegisterProgram";
 import Recruitment from "./pages/Recruitment";
 import Team from "./pages/Team";
 import Events from "./pages/Events";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
-import Register from "./pages/Register"; // 👈 New import
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import RegistrationPage from "./pages/RegistrationPage";
+import PaymentResultPage from './pages/PaymentResultPage';
+
+
 
 const queryClient = new QueryClient();
 
@@ -28,13 +36,19 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/programs" element={<Programs />} />
-          <Route path="/register" element={<Register />} /> {/* 👈 Added route */}
+          <Route path="/register-program" element={<RegisterProgram />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/recruitment" element={<Recruitment />} />
           <Route path="/team" element={<Team />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/events/:id" element={<EventDetails />} />
+          <Route path="/events/:id/register" element={<RegistrationPage />} />
+          <Route path="/payment-result" element={<PaymentResultPage />} />
+
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/contact" element={<Contact />} />
-          {/* Keep all routes above the catch-all */}
+
+          {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

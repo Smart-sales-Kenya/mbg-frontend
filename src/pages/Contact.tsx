@@ -287,25 +287,25 @@ const Contact = () => {
       </section>
 
       {/* Map Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-2">Visit Our Office</h2>
-          <p className="text-muted-foreground mb-6">
-            Pine Tree Plaza, Kaburu Drive, Off Ngong Road, Nairobi
-          </p>
-          <div className="aspect-video max-w-4xl mx-auto rounded-lg overflow-hidden shadow-elegant">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8158!2d36.7568!3d-1.2961"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </div>
-        </div>
-      </section>
+<section className="py-20 bg-muted/30">
+  <div className="container mx-auto px-4 text-center">
+    <h2 className="text-3xl font-bold mb-2">Visit Our Office</h2>
+    <p className="text-muted-foreground mb-6">
+      Pine Tree Plaza, Kaburu Drive, Off Ngong Road, Nairobi
+    </p>
+    <div className="aspect-video max-w-4xl mx-auto rounded-lg overflow-hidden shadow-elegant">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.811280259089!2d36.7659499738673!3d-1.296994835629109!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f1a625f207fb3%3A0xaec14f07f52eb27b!2sPine%20Tree%20Plaza%2C%20Kaburu%20Drive%2C%20Nairobi!5e0!3m2!1sen!2ske!4v1730727612001!5m2!1sen!2ske"
+        width="100%"
+        height="100%"
+        style={{ border: 0 }}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+      ></iframe>
+    </div>
+  </div>
+</section>
+
 
       {/* CTA Section */}
       <section className="py-20 gradient-hero text-primary-foreground text-center">

@@ -9,46 +9,50 @@ import "swiper/css";
 import "swiper/css/autoplay";
 import ceoImage from "@/assets/ceo-edward-ndegwa.jpg";
 
-
 const About = () => {
   const values = [
-    {
-      icon: Target,
-      title: "Action-Oriented",
-      description:
-        "We take initiative and move fast with intention. Example: You notice a delay in client training and proactively create a simple process to fix it.",
-    },
-    {
-      icon: Briefcase,
-      title: "Hardworking",
-      description:
-        "We put in consistent effort and aim for excellence. Example: You go the extra mile to prepare a personalized client report without being pushed.",
-    },
-    {
-      icon: Users,
-      title: "Empathetic",
-      description:
-        "We lead and interact with understanding and compassion. Example: You pause to listen to a client’s hesitation and adjust your proposed solution accordingly.",
-    },
-    {
-      icon: Award,
-      title: "Accountable",
-      description:
-        "We own our outcomes—wins and mistakes alike. Example: You take responsibility for a missed deadline and share a new plan to recover.",
-    },
-    {
-      icon: TrendingUp,
-      title: "Determined",
-      description:
-        "We persevere through obstacles with grit. Example: You follow up on a tough client for weeks and finally close the project.",
-    },
-  ];
+  {
+    icon: Award,
+    title: "Fairness",
+    description:
+      "We believe every African business deserves an equal opportunity to succeed. We operate with transparency and integrity, ensuring access to markets and opportunities is open and just for all.",
+  },
+  {
+    icon: Users,
+    title: "Empowerment",
+    description:
+      "We exist to uplift others — equipping entrepreneurs and youth with the tools, knowledge, and confidence to grow, innovate, and lead change in their communities.",
+  },
+  {
+    icon: Briefcase,
+    title: "Collaboration",
+    description:
+      "We grow stronger together. By connecting businesses, communities, and partners, we create a supportive ecosystem where shared success fuels collective progress.",
+  },
+  {
+    icon: Target,
+    title: "Community Impact",
+    description:
+      "We measure success by the lives we touch — from the jobs created to the families sustained and the local economies revitalized. Every action we take is guided by purpose and people.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Innovation",
+    description:
+      "We embrace creativity and forward thinking, using new ideas and technologies to unlock opportunities and drive sustainable growth across Africa.",
+  },
+  {
+    icon: Award,
+    title: "Integrity",
+    description:
+      "We are honest, reliable, and accountable in all we do — building trust through consistency, respect, and a deep commitment to our vision for Africa’s future.",
+  },
+];
 
-const partners = Array.from({ length: 19 }, (_, i) => ({
-  logo: `/partners/Picture${i + 1}.${[6, 15].includes(i + 1) ? "jpg" : "png"}`,
-  alt: `Partner logo ${i + 1}`,
-}));
-
+  const partners = Array.from({ length: 19 }, (_, i) => ({
+    logo: `/partners/Picture${i + 1}.${[6, 15].includes(i + 1) ? "jpg" : "png"}`,
+    alt: `Partner logo ${i + 1}`,
+  }));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -109,54 +113,109 @@ const partners = Array.from({ length: 19 }, (_, i) => ({
             </div>
           </div>
 
-          {/* Philosophy */}
+          {/* Philosophy Statement */}
           <div className="bg-muted/30 rounded-lg p-8 md:p-12 mb-20">
-            <h2 className="text-3xl font-bold mb-6 text-center">Our Philosophy</h2>
-            <div className="max-w-3xl mx-auto space-y-4 text-center text-muted-foreground">
-              <p className="text-lg">
-                We believe that sales is not just about closing deals—it's about
-                building relationships, understanding customer needs, and
-                delivering value consistently.
+            <h2 className="text-3xl font-bold mb-6 text-center">Philosophy Statement</h2>
+            <div className="max-w-4xl mx-auto space-y-4 text-center text-muted-foreground text-lg">
+              <p>
+                Africa’s economic transformation begins with empowering its small and medium enterprises (SMEs) — the true engines of growth and innovation. We recognize that behind every small business is an entrepreneur with the potential to create jobs, drive local value chains, and inspire sustainable prosperity within communities.
               </p>
-              <p className="text-lg">
-                Our approach combines strategic thinking with practical
-                execution. We don't just teach theory; we work alongside your
-                team to implement systems, processes, and behaviors that drive
-                real results.
+              <p>
+                We are on a mission to bridge this opportunity gap by providing African businesses with the sales capability tools, networks, and market access they need to compete and thrive — in the country and across Africa. We believe that when African enterprises are given a fair chance through access to the right talent, they can stand shoulder to shoulder with the best in the world.
               </p>
-              <p className="text-lg font-semibold text-foreground">
-                Learn • Network • Sell
+              <p>
+                At the heart of our work is a deep commitment to job creation and youth empowerment. Africa’s young population is its greatest asset, and by helping SMEs grow, we unlock pathways for meaningful employment and skill development.
+              </p>
+              <p>
+                Success is not only in sales, but in the number of lives improved, businesses scaled, and communities uplifted.
+              </p>
+              <p className="font-semibold text-foreground">
+                We believe that when African businesses succeed, Africa thrives — and our mission is to make that success both possible and sustainable.
               </p>
             </div>
           </div>
 
-          {/* Values */}
-          <div className="mb-20">
-            <h2 className="text-3xl font-bold mb-12 text-center">Our Values</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {values.map((value, index) => {
-                const Icon = value.icon;
-                return (
-                  <Card
-                    key={index}
-                    className="shadow-elegant transition-all text-center"
-                  >
-                    <CardContent className="pt-6">
-                      <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4 mx-auto">
-                        <Icon className="h-6 w-6 text-accent" />
-                      </div>
-                      <h3 className="text-xl font-semibold mb-3">
-                        {value.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {value.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+          {/* Vision & Mission Section */}
+          <div className="grid md:grid-cols-2 gap-12 mb-20">
+            <div className="bg-primary/10 rounded-lg p-8 shadow-elegant">
+              <h2 className="text-3xl font-bold mb-4 text-primary text-center">
+                Vision Statement
+              </h2>
+              <p className="text-muted-foreground text-lg text-center">
+                To build a thriving continent — Africa — where African businesses
+                have a fair chance to succeed, creating sustainable growth and
+                employment opportunities for the continent’s growing youth
+                population.
+              </p>
+            </div>
+
+            <div className="bg-accent/10 rounded-lg p-8 shadow-elegant">
+              <h2 className="text-3xl font-bold mb-4 text-accent text-center">
+                Mission Statement
+              </h2>
+              <p className="text-muted-foreground text-lg text-center">
+                To empower small and medium-sized African enterprises by
+                providing them with sales support, market access, and growth tools
+                that enable them to compete, expand, and create jobs.
+              </p>
+              <p className="text-muted-foreground text-lg text-center mt-4">
+                We are committed to promoting fairness, collaboration, and
+                innovation — bridging the gap between African businesses and the
+                opportunities they deserve, while driving inclusive economic
+                development across the continent.
+              </p>
             </div>
           </div>
+
+          {/* Alternate Vision & Mission Section */}
+          <div className="bg-muted/40 rounded-lg p-8 md:p-12 mb-20 text-center">
+            <h2 className="text-3xl font-bold mb-6">Our Vision</h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
+              To see an Africa where every local business has the opportunity to
+              grow, create jobs, and inspire hope — building a continent where
+              prosperity is shared, and success is born from within our
+              communities.
+            </p>
+
+            <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Our mission is to champion the growth of Africa’s small and medium
+              businesses by opening doors to markets, customers, and opportunities
+              by giving them access to the best sales and marketing talent. We
+              work every day to ensure African businesses are seen, supported, and
+              given a fair chance to succeed — because when they rise, we all rise
+              together.
+            </p>
+          </div>
+
+          {/* Values */}
+<div className="mb-20">
+  <h2 className="text-3xl font-bold mb-12 text-center">Our Values</h2>
+  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {values.map((value, index) => {
+      const Icon = value.icon;
+      return (
+        <Card
+          key={index}
+          className="shadow-elegant transition-all text-center"
+        >
+          <CardContent className="pt-6">
+            <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4 mx-auto">
+              <Icon className="h-6 w-6 text-accent" />
+            </div>
+            <h3 className="text-xl font-semibold mb-3">
+              {value.title}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {value.description}
+            </p>
+          </CardContent>
+        </Card>
+      );
+    })}
+  </div>
+</div>
+
 
           {/* CEO Profile */}
           <div className="bg-secondary/50 rounded-lg p-8 md:p-12 mb-20">
@@ -166,13 +225,13 @@ const partners = Array.from({ length: 19 }, (_, i) => ({
               </h2>
               <div className="grid md:grid-cols-3 gap-8 items-center">
                 {/* CEO Image */}
-               <div className="flex justify-center md:justify-start">
-                    <img
-                      src={ceoImage}
-                      alt="Edward Ndegwa - CEO"
-                      className="rounded-2xl shadow-lg w-64 h-64 object-cover border-4 border-primary/20"
-                    />
-                  </div>
+                <div className="flex justify-center md:justify-start">
+                  <img
+                    src={ceoImage}
+                    alt="Edward Ndegwa - CEO"
+                    className="rounded-2xl shadow-lg w-64 h-64 object-cover border-4 border-primary/20"
+                  />
+                </div>
 
                 {/* CEO Text */}
                 <div className="md:col-span-2">

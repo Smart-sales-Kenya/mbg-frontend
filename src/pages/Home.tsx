@@ -21,12 +21,22 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
+// ✅ Use environment variable for API URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+interface Testimonial {
+  author: string;
+  company: string;
+  logo: string;
+  text: string;
+}
+
 const Home = () => {
-  const [testimonials, setTestimonials] = useState([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/testimonials/") // ✅ replace with your backend API URL
+      .get(`${API_BASE_URL}/api/testimonials/`)
       .then((res) => setTestimonials(res.data))
       .catch((err) => console.error("Error fetching testimonials:", err));
   }, []);
@@ -88,8 +98,10 @@ const Home = () => {
         </div>
         <div className="relative container mx-auto px-4 py-24 md:py-32">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Master Sales. Drive Growth. Transform Your Business.
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-balance">
+              Master Sales.<br />
+              Consistently Hit Targets.<br />
+              Transform Your Business.
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-primary-foreground/90">
               Leading Sales Capability Training and Coaching across Africa
@@ -125,9 +137,7 @@ const Home = () => {
                   <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">
                     {stat.value}
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {stat.label}
-                  </div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </div>
               );
             })}
@@ -162,6 +172,7 @@ const Home = () => {
                 </p>
               </CardContent>
             </Card>
+
             <Card className="shadow-elegant hover:shadow-hover transition-all">
               <CardContent className="pt-6">
                 <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
@@ -174,6 +185,7 @@ const Home = () => {
                 </p>
               </CardContent>
             </Card>
+
             <Card className="shadow-elegant hover:shadow-hover transition-all">
               <CardContent className="pt-6">
                 <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
@@ -194,9 +206,7 @@ const Home = () => {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Our Programs
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Programs</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Choose from our range of sales training and enablement programs
               designed to transform your team's performance
@@ -214,9 +224,7 @@ const Home = () => {
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-accent/10 transition-colors">
                       <Icon className="h-6 w-6 text-primary group-hover:text-accent transition-colors" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      {program.title}
-                    </h3>
+                    <h3 className="text-lg font-semibold mb-2">{program.title}</h3>
                     <p className="text-sm text-muted-foreground mb-4">
                       {program.description}
                     </p>
@@ -291,12 +299,8 @@ const Home = () => {
                       "{testimonial.text}"
                     </p>
                     <div>
-                      <div className="font-semibold text-lg">
-                        {testimonial.author}
-                      </div>
-                      <div className="text-sm text-accent">
-                        {testimonial.company}
-                      </div>
+                      <div className="font-semibold text-lg">{testimonial.author}</div>
+                      <div className="text-sm text-accent">{testimonial.company}</div>
                     </div>
                   </CardContent>
                 </Card>
