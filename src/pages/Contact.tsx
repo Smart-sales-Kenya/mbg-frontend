@@ -16,6 +16,9 @@ import {
 import { toast } from "sonner";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
+// Get API base URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
 /**
  * Helper function to get CSRF token from browser cookies.
  * Django automatically sets it if you have `{% csrf_token %}` in templates
@@ -51,7 +54,7 @@ const Contact = () => {
       setCsrfToken(token);
     } else {
       // Optional: request CSRF token from Django endpoint
-      fetch("http://127.0.0.1:8000/api/get-csrf-token/", {
+      fetch(`${API_BASE_URL}/api/get-csrf-token/`, {
         credentials: "include",
       })
         .then((res) => res.json())
@@ -70,7 +73,7 @@ const Contact = () => {
 
     try {
       setLoading(true);
-      const response = await fetch("http://127.0.0.1:8000/api/contact/", {
+      const response = await fetch(`${API_BASE_URL}/api/contact/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,7 +110,7 @@ const Contact = () => {
             Get in Touch
           </h1>
           <p className="text-xl text-primary-foreground/90">
-            Ready to grow your business? Let’s start the conversation.
+            Ready to grow your business? Let's start the conversation.
           </p>
         </div>
       </section>
@@ -134,7 +137,7 @@ const Contact = () => {
               title: "Phone",
               text: (
                 <>
-                  Edward +254 734 516 091 <br />Terrence +254 707 955 317
+                 Office  WhatsApp +254 707 955 317 <br />  Edward +254 734 516 091
                 </>
               )
             },
@@ -188,7 +191,7 @@ const Contact = () => {
               <CardHeader>
                 <CardTitle className="text-2xl">Send Us a Message</CardTitle>
                 <p className="text-muted-foreground">
-                  Fill out the form below and we’ll get back to you within 24 hours.
+                  Fill out the form below and we'll get back to you within 24 hours.
                 </p>
               </CardHeader>
 
@@ -287,25 +290,24 @@ const Contact = () => {
       </section>
 
       {/* Map Section */}
-<section className="py-20 bg-muted/30">
-  <div className="container mx-auto px-4 text-center">
-    <h2 className="text-3xl font-bold mb-2">Visit Our Office</h2>
-    <p className="text-muted-foreground mb-6">
-      Pine Tree Plaza, Kaburu Drive, Off Ngong Road, Nairobi
-    </p>
-    <div className="aspect-video max-w-4xl mx-auto rounded-lg overflow-hidden shadow-elegant">
-      <iframe
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.811280259089!2d36.7659499738673!3d-1.296994835629109!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f1a625f207fb3%3A0xaec14f07f52eb27b!2sPine%20Tree%20Plaza%2C%20Kaburu%20Drive%2C%20Nairobi!5e0!3m2!1sen!2ske!4v1730727612001!5m2!1sen!2ske"
-        width="100%"
-        height="100%"
-        style={{ border: 0 }}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-      ></iframe>
-    </div>
-  </div>
-</section>
-
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-2">Visit Our Office</h2>
+          <p className="text-muted-foreground mb-6">
+            Pine Tree Plaza, Kaburu Drive, Off Ngong Road, Nairobi
+          </p>
+          <div className="aspect-video max-w-4xl mx-auto rounded-lg overflow-hidden shadow-elegant">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.811280259089!2d36.7659499738673!3d-1.296994835629109!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f1a625f207fb3%3A0xaec14f07f52eb27b!2sPine%20Tree%20Plaza%2C%20Kaburu%20Drive%2C%20Nairobi!5e0!3m2!1sen!2ske!4v1730727612001!5m2!1sen!2ske"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="py-20 gradient-hero text-primary-foreground text-center">

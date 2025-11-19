@@ -260,13 +260,7 @@ const handleRegister = () => {
               </Card>
 
               {/* Contact */}
-              <Card className="sticky top-[600px]">
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-4">Need Help?</h3>
-                  <p className="text-sm">Email: info@smartsales.co.ke</p>
-                  <p className="text-sm">Phone: +254 700 000000</p>
-                </CardContent>
-              </Card>
+             
             </div>
           </div>
         </div>

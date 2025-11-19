@@ -73,19 +73,7 @@ const Programs = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navigation />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-xl font-semibold">Loading programs...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  
 
   return (
     <div className="min-h-screen flex flex-col">

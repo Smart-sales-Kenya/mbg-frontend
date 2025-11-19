@@ -21,7 +21,7 @@ const Footer = () => {
             </p>
             <div className="flex gap-3">
               <a
-                href="https://www.facebook.com/mbgrowthkenya/"
+                href="https://www.facebook.com/MasteringBusinessGrowth/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-accent transition-colors"
@@ -30,7 +30,7 @@ const Footer = () => {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://www.instagram.com/mbgrowthkenya/"
+                href="https://www.instagram.com/masteringbusinessgrowth/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-accent transition-colors"
@@ -39,7 +39,7 @@ const Footer = () => {
                 <Instagram className="h-5 w-5" />
               </a>
               <a
-                href="https://x.com/MBGrowthke"
+                href="https://twitter.com/MBG_ke/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-accent transition-colors"
@@ -48,7 +48,7 @@ const Footer = () => {
                 <Twitter className="h-5 w-5" />
               </a>
               <a
-                href="https://www.linkedin.com/in/edward-ndegwa-9369a940/"
+                href="https://www.linkedin.com/in/edward-ndegwa"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-accent transition-colors"
@@ -57,7 +57,16 @@ const Footer = () => {
                 <Linkedin className="h-5 w-5" />
               </a>
               <a
-                href="https://www.youtube.com/@SmartSalesKenya"
+                href="https://www.youtube.com/@MasteringBusinessGrowth"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-accent transition-colors"
+                aria-label="YouTube"
+              >
+                <Youtube className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.youtube.com/@SmartsalesKenya"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-accent transition-colors"

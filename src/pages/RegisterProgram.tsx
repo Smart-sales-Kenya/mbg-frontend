@@ -58,19 +58,36 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // CSRF token utility
 const getCSRFToken = async (): Promise<string | null> => {
   try {
+    console.log("🛡️ Fetching CSRF token...");
     const response = await fetch(`${API_BASE_URL}/api/get-csrf-token/`, {
+      method: 'GET',
       credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+      },
     });
     
     if (response.ok) {
       const data = await response.json();
-      return data.csrfToken;
+      console.log("✅ CSRF token received:", data.csrfToken ? "Yes" : "No");
+      return data.csrfToken || null;
+    } else {
+      console.error('❌ CSRF token response not OK:', response.status, response.statusText);
+      return null;
     }
-    return null;
   } catch (error) {
-    console.error('Failed to get CSRF token:', error);
+    console.error('❌ Failed to get CSRF token:', error);
     return null;
   }
+};
+
+// Fallback function to extract CSRF token from cookies
+const getCSRFFromCookies = (): string | null => {
+  const cookieValue = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrftoken='))
+    ?.split('=')[1];
+  return cookieValue || null;
 };
 
 const RegisterProgram = () => {
@@ -103,68 +120,64 @@ const RegisterProgram = () => {
 
   // Check for payment callback parameters
   useEffect(() => {
-    const orderTrackingId = searchParams.get('OrderTrackingId');
-    const orderMerchantReference = searchParams.get('OrderMerchantReference');
+    const status = searchParams.get('status');
+    const orderTrackingId = searchParams.get('order_tracking_id');
+    const paymentId = searchParams.get('payment_id');
+    const message = searchParams.get('message');
     
-    if (orderTrackingId) {
-      console.log("🔄 Program Payment callback detected:", { orderTrackingId, orderMerchantReference });
+    if (status && orderTrackingId) {
+      console.log("🔄 Program Payment callback detected:", { status, orderTrackingId, paymentId, message });
       
-      // Verify payment status with backend
-      verifyPaymentStatus(orderTrackingId);
+      // Handle the payment result
+      handlePaymentResult(status, orderTrackingId, paymentId, message);
       
       // Clean up URL parameters
       const cleanParams = new URLSearchParams(searchParams);
-      cleanParams.delete('OrderTrackingId');
-      cleanParams.delete('OrderMerchantReference');
+      cleanParams.delete('status');
+      cleanParams.delete('order_tracking_id');
+      cleanParams.delete('payment_id');
+      cleanParams.delete('message');
       setSearchParams(cleanParams);
     }
   }, [searchParams, setSearchParams]);
 
-  const verifyPaymentStatus = async (orderTrackingId: string) => {
-    try {
-      console.log("🔍 Verifying program payment status for:", orderTrackingId);
+  const handlePaymentResult = (status: string, orderTrackingId: string, paymentId: string | null, message: string | null) => {
+    console.log("💰 Handling payment result:", { status, orderTrackingId, paymentId, message });
+    
+    if (status === 'completed') {
+      setPaymentCompleted(true);
+      toast.success(message || "Payment completed successfully!");
       
-      const response = await fetch(`${API_BASE_URL}/api/program-payments/pesapal-callback/?OrderTrackingId=${orderTrackingId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("✅ Program payment verification result:", result);
-        
-        if (result.payment_status === 'completed') {
-          setPaymentCompleted(true);
-          toast.success("Payment completed successfully!");
-          
-          // Clear storage
-          sessionStorage.removeItem('pendingProgramPayment');
-          sessionStorage.removeItem('pendingProgramRegistration');
-          
-          // Redirect to homepage after 3 seconds
-          setTimeout(() => {
-            navigate("/");
-          }, 3000);
-        }
-      } else {
-        console.error("❌ Program payment verification failed");
+      // Clear storage
+      sessionStorage.removeItem('pendingProgramPayment');
+      sessionStorage.removeItem('pendingProgramRegistration');
+      sessionStorage.removeItem('pendingProgramOrderTracking');
+      
+      // Redirect to payment success page
+      setTimeout(() => {
+        navigate("/payment-success", { 
+          state: { 
+            programTitle: program?.title,
+            registrationId: registrationId,
+            paymentId: paymentId,
+            type: 'program'
+          }
+        });
+      }, 2000);
+    } else if (status === 'failed') {
+      toast.error(message || "Payment failed. Please try again.");
+      setProcessingPayment(false);
+    } else if (status === 'pending') {
+      toast.info(message || "Payment is still processing");
+      // Continue polling for status
+      if (paymentId) {
+        setPaymentId(paymentId);
       }
-    } catch (error) {
-      console.error("❌ Error verifying program payment:", error);
+    } else if (status === 'error') {
+      toast.error(message || "An error occurred during payment processing");
+      setProcessingPayment(false);
     }
   };
-
-  useEffect(() => {
-    if (!program) {
-      toast.error("Program Not Selected. Please select a program to register.");
-      navigate("/programs");
-      return;
-    }
-    
-    setLoading(false);
-  }, [program, navigate]);
 
   // Poll for payment status if we have a payment ID but payment isn't completed
   useEffect(() => {
@@ -173,6 +186,8 @@ const RegisterProgram = () => {
     const currentPaymentId = paymentId || sessionStorage.getItem('pendingProgramPayment');
     
     if (registered && currentPaymentId && !paymentCompleted && isPaid) {
+      console.log("🔄 Starting payment status polling for:", currentPaymentId);
+      
       interval = setInterval(async () => {
         try {
           const response = await fetch(`${API_BASE_URL}/api/program-payments/status/${currentPaymentId}/`);
@@ -187,29 +202,24 @@ const RegisterProgram = () => {
               
               sessionStorage.removeItem('pendingProgramPayment');
               sessionStorage.removeItem('pendingProgramRegistration');
+              sessionStorage.removeItem('pendingProgramOrderTracking');
               
-              setTimeout(() => {
-                navigate("/");
-              }, 3000);
+              // Redirect to payment success page
+              navigate("/program-payment-result", { 
+                state: { 
+                  programTitle: program?.title,
+                  registrationId: registrationId,
+                  paymentId: currentPaymentId,
+                  type: 'program'
+                }
+              });
             } else if (statusData.payment_status === 'failed') {
               toast.error("Payment failed. Please try again.");
               clearInterval(interval);
               sessionStorage.removeItem('pendingProgramPayment');
-            } else if (statusData.pesapal_status) {
-              const pesapalStatusCode = statusData.pesapal_status.status_code;
-              if (pesapalStatusCode === 1 || pesapalStatusCode === '1') {
-                setPaymentCompleted(true);
-                toast.success("Payment completed successfully!");
-                clearInterval(interval);
-                
-                sessionStorage.removeItem('pendingProgramPayment');
-                sessionStorage.removeItem('pendingProgramRegistration');
-                
-                setTimeout(() => {
-                  navigate("/");
-                }, 3000);
-              }
+              sessionStorage.removeItem('pendingProgramOrderTracking');
             }
+            // For pending status, just continue polling
           }
         } catch (error) {
           console.error("Error checking program payment status:", error);
@@ -220,7 +230,7 @@ const RegisterProgram = () => {
         if (interval) clearInterval(interval);
       };
     }
-  }, [registered, paymentId, paymentCompleted, isPaid, navigate]);
+  }, [registered, paymentId, paymentCompleted, isPaid, navigate, program, registrationId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -237,19 +247,32 @@ const RegisterProgram = () => {
       
       console.log("🚀 Initiating program payment for registration:", registrationId);
       
-      // Get CSRF token first
-      const csrfToken = await getCSRFToken();
+      // Try to get CSRF token from API first
+      let csrfToken = await getCSRFToken();
+      
+      // Fallback to cookie if API fails
+      if (!csrfToken) {
+        console.log("🔄 Trying to get CSRF token from cookies...");
+        csrfToken = getCSRFFromCookies();
+      }
       
       if (!csrfToken) {
-        throw new Error("Failed to get CSRF token");
+        console.warn("⚠️ No CSRF token available, proceeding without it");
+      } else {
+        console.log("✅ Using CSRF token for request");
+      }
+      
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      
+      if (csrfToken) {
+        headers["X-CSRFToken"] = csrfToken;
       }
       
       const response = await fetch(`${API_BASE_URL}/api/program-payments/initiate/${registrationId}/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
+        headers,
         credentials: 'include',
       });
 
@@ -320,12 +343,17 @@ const RegisterProgram = () => {
       // Get CSRF token for registration request too
       const csrfToken = await getCSRFToken();
       
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      
+      if (csrfToken) {
+        headers["X-CSRFToken"] = csrfToken;
+      }
+      
       const res = await fetch(`${API_BASE_URL}/api/program/${program.id}/register/`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          ...(csrfToken && { "X-CSRFToken": csrfToken })
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify(requestBody),
       });
@@ -385,6 +413,7 @@ const RegisterProgram = () => {
   useEffect(() => {
     const pendingRegistration = sessionStorage.getItem('pendingProgramRegistration');
     const pendingPayment = sessionStorage.getItem('pendingProgramPayment');
+    const pendingOrderTracking = sessionStorage.getItem('pendingProgramOrderTracking');
     
     if (pendingRegistration) {
       setRegistrationId(pendingRegistration);
@@ -395,6 +424,10 @@ const RegisterProgram = () => {
     if (pendingPayment) {
       setPaymentId(pendingPayment);
       console.log("🔄 Found pending program payment:", pendingPayment);
+    }
+
+    if (pendingOrderTracking) {
+      console.log("🔄 Found pending program order tracking:", pendingOrderTracking);
     }
   }, []);
 
@@ -457,41 +490,54 @@ const RegisterProgram = () => {
                   {registrationId && (
                     <p className="text-sm"><strong>Registration ID:</strong> {registrationId}</p>
                   )}
+                  {paymentId && (
+                    <p className="text-sm"><strong>Payment ID:</strong> {paymentId}</p>
+                  )}
                 </div>
               </div>
 
               {isPaid ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Your registration is pending payment. Complete your payment to secure your spot.
-                  </p>
-                  
-                  {processingPayment && (
-                    <div className="flex items-center justify-center gap-2 text-blue-600">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Redirecting to payment...</span>
+                  {paymentCompleted ? (
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <p className="text-green-700 font-semibold">
+                        ✅ Payment Completed! Redirecting to success page...
+                      </p>
                     </div>
-                  )}
-                  
-                  <div className="flex gap-4 justify-center pt-4 flex-wrap">
-                    <Button variant="outline" onClick={() => navigate("/programs")}>
-                      View More Programs
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      onClick={handleManualPayment}
-                      disabled={processingPayment}
-                    >
-                      {processingPayment ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        "Proceed to Payment"
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Your registration is pending payment. Complete your payment to secure your spot.
+                      </p>
+                      
+                      {processingPayment && (
+                        <div className="flex items-center justify-center gap-2 text-blue-600">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Redirecting to payment...</span>
+                        </div>
                       )}
-                    </Button>
-                  </div>
+                      
+                      <div className="flex gap-4 justify-center pt-4 flex-wrap">
+                        <Button variant="outline" onClick={() => navigate("/programs")}>
+                          View More Programs
+                        </Button>
+                        <Button 
+                          variant="default" 
+                          onClick={handleManualPayment}
+                          disabled={processingPayment}
+                        >
+                          {processingPayment ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            "Proceed to Payment"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -651,45 +697,45 @@ const RegisterProgram = () => {
                     id="challenges" 
                     name="challenges" 
                     value={formData.challenges} 
-                    onChange={handleChange} 
-                    placeholder="Tell us about your current sales challenges and goals..." 
-                    rows={4} 
-                    disabled={submitting} 
-                  />
-                </div>
+                      onChange={handleChange} 
+                      placeholder="Tell us about your current sales challenges and goals..." 
+                      rows={4} 
+                      disabled={submitting} 
+                    />
+                  </div>
 
-                <div className="flex flex-col md:flex-row gap-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => navigate("/programs")} 
-                    className="flex-1" 
-                    disabled={submitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    variant="hero" 
-                    className="flex-1" 
-                    disabled={submitting}
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : isPaid ? "Register & Proceed to Payment" : "Submit Registration"}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => navigate("/programs")} 
+                      className="flex-1" 
+                      disabled={submitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      variant="hero" 
+                      className="flex-1" 
+                      disabled={submitting}
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : isPaid ? "Register & Proceed to Payment" : "Submit Registration"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
-  );
-};
+    );
+  };
 
-export default RegisterProgram;
+  export default RegisterProgram;

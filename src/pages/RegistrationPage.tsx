@@ -58,9 +58,9 @@ const EventRegistrationPage: React.FC = () => {
     if (orderTrackingId) {
       console.log("🔄 Payment callback detected, redirecting to backend handler");
       
-      // Let the backend handle the payment verification and redirect
-      const callbackUrl = `${API_BASE_URL}/api/payments/pesapal-callback/?OrderTrackingId=${orderTrackingId}`;
-      window.location.href = callbackUrl;
+      // // Let the backend handle the payment verification and redirect
+      // const callbackUrl = `${API_BASE_URL}/api/payments/pesapal-callback/?OrderTrackingId=${orderTrackingId}`;
+      // window.location.href = callbackUrl;
     }
   }, [searchParams]);
 

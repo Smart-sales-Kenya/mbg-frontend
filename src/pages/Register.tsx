@@ -29,12 +29,24 @@ function getCookie(name: string) {
 const Register = () => {
   const [authMode, setAuthMode] = useState<"login" | "register" | "reset">("login");
   const [authData, setAuthData] = useState({
-    fullName: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
+    role: "job_seeker",
   });
   const [loading, setLoading] = useState(false);
+
+  // Fetch CSRF token
+  const fetchCsrfToken = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/get-csrf-token/`, {
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("CSRF token fetch error:", error);
+    }
+  };
 
   // --- Register User ---
   const handleRegister = async (e: React.FormEvent) => {
@@ -50,6 +62,8 @@ const Register = () => {
 
     setLoading(true);
     try {
+      await fetchCsrfToken();
+      
       const response = await fetch(`${API_BASE_URL}/accounts/auth/registration/`, {
         method: "POST",
         headers: {
@@ -57,77 +71,198 @@ const Register = () => {
           "X-CSRFToken": getCookie("csrftoken") || "",
         },
         body: JSON.stringify({
-          username: authData.fullName,
+          username: authData.username,
           email: authData.email,
           password1: authData.password,
           password2: authData.confirmPassword,
+          role: authData.role,
         }),
         credentials: "include",
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorMsg = Object.values(data).flat().join(" ");
-        toast.error(errorMsg);
+      // Check if response is HTML (404 page) instead of JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text.substring(0, 200));
+        toast.error("Server error: Endpoint not found. Check URL configuration.");
         return;
       }
 
-      toast.success("Account created successfully!");
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle different types of errors
+        if (data.username) {
+          toast.error(`Username error: ${data.username.join(' ')}`);
+        } else if (data.email) {
+          toast.error(`Email error: ${data.email.join(' ')}`);
+        } else if (data.password1) {
+          toast.error(`Password error: ${data.password1.join(' ')}`);
+        } else if (data.non_field_errors) {
+          toast.error(data.non_field_errors.join(' '));
+        } else {
+          const errorMsg = Object.values(data).flat().join(" ") || "Registration failed!";
+          toast.error(errorMsg);
+        }
+        return;
+      }
+
+      toast.success("Account created successfully! Please check your email for verification.");
       setAuthMode("login");
-      setAuthData({ fullName: "", email: "", password: "", confirmPassword: "" });
+      setAuthData({ username: "", email: "", password: "", confirmPassword: "", role: "job_seeker" });
     } catch (error) {
-      console.error(error);
+      console.error("Registration error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Login User ---
+  // --- Login User (Using JWT Token Endpoint) ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/accounts/auth/login/`, {
+      const response = await fetch(`${API_BASE_URL}/api/token/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken") || "",
         },
         body: JSON.stringify({
           email: authData.email,
           password: authData.password,
         }),
-        credentials: "include",
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text.substring(0, 200));
+        toast.error("Server error: Check API endpoint configuration.");
+        return;
+      }
 
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMsg = Object.values(data).flat().join(" ") || "Login failed!";
-        toast.error(errorMsg);
+        // If email fails, try with username
+        if (data.detail && data.detail.includes("credentials")) {
+          const retryResponse = await fetch(`${API_BASE_URL}/api/token/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: authData.email,
+              password: authData.password,
+            }),
+          });
+
+          const retryData = await retryResponse.json();
+
+          if (!retryResponse.ok) {
+            toast.error(retryData.detail || "Login failed! Check your credentials.");
+            return;
+          }
+
+          // Success with username fallback
+          if (retryData.access) {
+            localStorage.setItem('access_token', retryData.access);
+            
+            // Fetch and store user data immediately
+            await fetchAndStoreUserData(retryData.access);
+          }
+          if (retryData.refresh) {
+            localStorage.setItem('refresh_token', retryData.refresh);
+          }
+
+          toast.success("Logged in successfully!");
+          setAuthData({ username: "", email: "", password: "", confirmPassword: "", role: "job_seeker" });
+          return;
+        }
+        
+        toast.error(data.detail || "Login failed! Check your credentials. Or Verify your email.");
         return;
       }
 
+      // Success with email login
+      if (data.access) {
+        localStorage.setItem('access_token', data.access);
+        
+        // Fetch and store user data immediately
+        await fetchAndStoreUserData(data.access);
+      }
+      if (data.refresh) {
+        localStorage.setItem('refresh_token', data.refresh);
+      }
+
       toast.success("Logged in successfully!");
-      setAuthData({ fullName: "", email: "", password: "", confirmPassword: "" });
-      window.location.href = "/dashboard";
+      setAuthData({ username: "", email: "", password: "", confirmPassword: "", role: "job_seeker" });
+      
     } catch (error) {
-      console.error(error);
+      console.error("Login error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Password Reset ---
-  const fetchCsrfToken = async () => {
-    await fetch(`${API_BASE_URL}/api/get-csrf-token/`, {
-      credentials: "include",
+ const fetchAndStoreUserData = async (accessToken: string) => {
+  try {
+    // Fetch user profile to get role - USE THE CORRECT ENDPOINT
+    const userResponse = await fetch(`${API_BASE_URL}/api/get-current-user/`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
     });
-  };
 
+    if (userResponse.ok) {
+      const userData = await userResponse.json();
+      
+      // DEBUG: Log user data to see what's being returned
+      console.log('User data from backend:', userData);
+      
+      // Store user data in localStorage
+      localStorage.setItem('user_data', JSON.stringify(userData));
+      
+      // Enhanced admin check - check both is_staff and role
+      const isAdmin = userData.is_staff || userData.is_superuser || userData.role === 'admin';
+      
+      console.log('Admin check result:', {
+        is_staff: userData.is_staff,
+        is_superuser: userData.is_superuser,
+        role: userData.role,
+        final_isAdmin: isAdmin
+      });
+
+      // Redirect based on role
+      setTimeout(() => {
+        if (isAdmin) {
+          window.location.href = "/admin/dashboard";
+        } else {
+          window.location.href = "/recruitment/form";
+        }
+      }, 1000);
+    } else {
+      console.error('Failed to fetch user data:', await userResponse.text());
+      // Fallback: redirect to form if user info can't be fetched
+      setTimeout(() => {
+        window.location.href = "/recruitment/form";
+      }, 1000);
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    // Fallback: redirect to form
+    setTimeout(() => {
+      window.location.href = "/recruitment/form";
+    }, 1000);
+  }
+};
+  // --- Password Reset ---
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authData.email) {
@@ -148,6 +283,15 @@ const Register = () => {
         credentials: "include",
       });
 
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text.substring(0, 200));
+        toast.error("Server error: Endpoint not found. Check URL configuration.");
+        return;
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -164,11 +308,6 @@ const Register = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // --- Google Sign-In ---
-  const handleGoogleSignIn = () => {
-    window.location.href = `${API_BASE_URL}/api`;
   };
 
   return (
@@ -200,7 +339,7 @@ const Register = () => {
                 </CardTitle>
                 <CardDescription className="text-base mt-2">
                   {authMode === "login"
-                    ? "Enter your credentials to continue"
+                    ? "Enter your email and password to continue"
                     : authMode === "register"
                     ? "Fill in your details to get started"
                     : "Enter your email to receive a reset link"}
@@ -231,6 +370,7 @@ const Register = () => {
                           }
                         />
                       </div>
+
                       <div>
                         <Label htmlFor="login-password">Password *</Label>
                         <Input
@@ -244,36 +384,9 @@ const Register = () => {
                           }
                         />
                       </div>
-                      <Button type="submit" className="w-full" size="lg" disabled={loading}>
+
+                      <Button type="submit" className="bg-black w-full" size="lg" disabled={loading}>
                         {loading ? "Logging in..." : "Login"}
-                      </Button>
-                      <div className="text-center mt-2 text-sm">
-                        <button
-                          type="button"
-                          className="underline text-primary"
-                          onClick={() => setAuthMode("reset")}
-                        >
-                          Forgot Password?
-                        </button>
-                      </div>
-                      <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">
-                            Or continue with
-                          </span>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        size="lg"
-                        onClick={handleGoogleSignIn}
-                      >
-                        Continue with Google
                       </Button>
                     </form>
                   </TabsContent>
@@ -282,15 +395,15 @@ const Register = () => {
                   <TabsContent value="register">
                     <form onSubmit={handleRegister} className="space-y-4">
                       <div>
-                        <Label htmlFor="register-name">Username *</Label>
+                        <Label htmlFor="register-username">Username *</Label>
                         <Input
-                          id="register-name"
+                          id="register-username"
                           type="text"
                           required
                           placeholder="eg. JohnDoe"
-                          value={authData.fullName}
+                          value={authData.username}
                           onChange={(e) =>
-                            setAuthData({ ...authData, fullName: e.target.value })
+                            setAuthData({ ...authData, username: e.target.value })
                           }
                         />
                       </div>
@@ -306,6 +419,20 @@ const Register = () => {
                             setAuthData({ ...authData, email: e.target.value })
                           }
                         />
+                      </div>
+                      <div>
+                        <Label htmlFor="user-role">Account Type *</Label>
+                        <select
+                          id="user-role"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+                          value={authData.role}
+                          onChange={(e) =>
+                            setAuthData({ ...authData, role: e.target.value })
+                          }
+                        >
+                          <option value="job_seeker">Job Seeker</option>
+                          <option value="admin">Admin</option>
+                        </select>
                       </div>
                       <div>
                         <Label htmlFor="register-password">Password *</Label>

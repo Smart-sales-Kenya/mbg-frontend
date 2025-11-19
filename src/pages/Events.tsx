@@ -70,20 +70,6 @@ const Events = () => {
 
   const pastEvents = events.filter((e) => e.status === "completed").map(formatEventData);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navigation />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading events...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -93,7 +79,7 @@ const Events = () => {
       <section className="gradient-hero text-primary-foreground py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Events & Training Schedule</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Events Schedule</h1>
             <p className="text-xl text-primary-foreground/90">
               Join our upcoming programs, workshops, and events to accelerate your sales growth
             </p>

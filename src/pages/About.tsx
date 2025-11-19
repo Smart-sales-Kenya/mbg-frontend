@@ -1,7 +1,14 @@
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Award, Target, Briefcase, TrendingUp, Users } from "lucide-react";
+import {
+  Scale,
+  Zap,
+  Handshake,
+  HeartHandshake,
+  Lightbulb,
+  ShieldCheck,
+} from "lucide-react";
 import aboutImage from "@/assets/about-team.jpg";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -12,37 +19,37 @@ import ceoImage from "@/assets/ceo-edward-ndegwa.jpg";
 const About = () => {
   const values = [
   {
-    icon: Award,
+    icon: Scale,
     title: "Fairness",
     description:
       "We believe every African business deserves an equal opportunity to succeed. We operate with transparency and integrity, ensuring access to markets and opportunities is open and just for all.",
   },
   {
-    icon: Users,
+    icon: Zap,
     title: "Empowerment",
     description:
       "We exist to uplift others — equipping entrepreneurs and youth with the tools, knowledge, and confidence to grow, innovate, and lead change in their communities.",
   },
   {
-    icon: Briefcase,
+    icon: Handshake,
     title: "Collaboration",
     description:
       "We grow stronger together. By connecting businesses, communities, and partners, we create a supportive ecosystem where shared success fuels collective progress.",
   },
   {
-    icon: Target,
+    icon: HeartHandshake,
     title: "Community Impact",
     description:
       "We measure success by the lives we touch — from the jobs created to the families sustained and the local economies revitalized. Every action we take is guided by purpose and people.",
   },
   {
-    icon: TrendingUp,
+    icon: Lightbulb,
     title: "Innovation",
     description:
       "We embrace creativity and forward thinking, using new ideas and technologies to unlock opportunities and drive sustainable growth across Africa.",
   },
   {
-    icon: Award,
+    icon: ShieldCheck,
     title: "Integrity",
     description:
       "We are honest, reliable, and accountable in all we do — building trust through consistency, respect, and a deep commitment to our vision for Africa’s future.",
@@ -158,12 +165,7 @@ const About = () => {
                 providing them with sales support, market access, and growth tools
                 that enable them to compete, expand, and create jobs.
               </p>
-              <p className="text-muted-foreground text-lg text-center mt-4">
-                We are committed to promoting fairness, collaboration, and
-                innovation — bridging the gap between African businesses and the
-                opportunities they deserve, while driving inclusive economic
-                development across the continent.
-              </p>
+              
             </div>
           </div>
 
@@ -266,12 +268,12 @@ const About = () => {
               {/* Stats Section */}
               <div className="flex justify-center md:justify-end mt-10">
                 <div className="bg-primary/5 rounded-lg p-6 text-center w-64">
-                  <div className="text-4xl font-bold text-primary mb-2">10+</div>
+                  <div className="text-4xl font-bold text-primary mb-2">20+</div>
                   <div className="text-sm text-muted-foreground">
                     Years of Experience
                   </div>
                   <div className="text-4xl font-bold text-accent mb-2 mt-4">
-                    500+
+                    7000+
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Professionals Trained
