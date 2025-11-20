@@ -19,12 +19,28 @@ import { ChevronLeft, ChevronRight, Edit } from "lucide-react";
 // Environment variable for API base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Helper: get CSRF token
+// Helper: get CSRF token from cookies
 function getCookie(name: string) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop()?.split(";").shift();
 }
+
+// Improved CSRF token fetcher
+const getCsrfToken = async (): Promise<string | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/get-csrf-token/`, {
+      credentials: "include",
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.csrfToken || getCookie("csrftoken");
+    }
+  } catch (error) {
+    console.error("CSRF token fetch error:", error);
+  }
+  return getCookie("csrftoken");
+};
 
 interface FormData {
   // Personal Information
@@ -192,17 +208,6 @@ const CapabilityForm = () => {
     }
   }, [location.state]);
 
-  // Fetch CSRF token
-  const fetchCsrfToken = async () => {
-    try {
-      await fetch(`${API_BASE_URL}/api/get-csrf-token/`, {
-        credentials: "include",
-      });
-    } catch (error) {
-      console.error("CSRF token fetch error:", error);
-    }
-  };
-
   const roles = [
     "National Sales Manager",
     "Area/Regional Sales Manager",
@@ -222,7 +227,28 @@ const CapabilityForm = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, resumeFile: e.target.files[0] });
+      const file = e.target.files[0];
+      
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Please upload a PDF or Word document (PDF, DOC, DOCX)");
+        return;
+      }
+      
+      // Validate file size (5MB)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+      
+      setFormData({ ...formData, resumeFile: file });
     }
   };
 
@@ -233,22 +259,39 @@ const CapabilityForm = () => {
         toast.error("Please fill in all required fields");
         return;
       }
+      
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
     }
+    
     if (currentStep === 2) {
       if (formData.rolesInterested.length === 0 || !formData.yearsExperience || !formData.hasTeamExperience || !formData.industries) {
         toast.error("Please fill in all required fields");
         return;
       }
     }
+    
     if (currentStep === 3) {
       if (!formData.bdApproach || !formData.bdTools || !formData.bdConfidence) {
         toast.error("Please fill in all required fields");
         return;
       }
     }
+    
     if (currentStep === 4) {
       if (!formData.amApproach || !formData.amChallenges || !formData.amConfidence) {
         toast.error("Please fill in all required fields");
+        return;
+      }
+    }
+    
+    if (currentStep === 6) {
+      if (!formData.achievements || !formData.education || !formData.consent) {
+        toast.error("Please fill in all required fields and provide consent");
         return;
       }
     }
@@ -285,66 +328,86 @@ const CapabilityForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Prepare form data for Django
+      // Get CSRF token first
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        toast.error("Security token missing. Please refresh the page.");
+        return;
+      }
+
+      // Prepare form data for Django - FIXED VERSION
       const submissionData = new FormData();
       
-      // Convert camelCase to snake_case and append all fields
-      submissionData.append('full_name', formData.fullName);
-      submissionData.append('email', formData.email);
-      submissionData.append('phone', formData.phone);
-      submissionData.append('location', formData.location);
-      submissionData.append('linkedin_profile', formData.linkedIn || '');
+      // Personal Information
+      submissionData.append('full_name', formData.fullName.trim());
+      submissionData.append('email', formData.email.trim());
+      submissionData.append('phone', formData.phone.trim());
+      submissionData.append('location', formData.location.trim());
+      submissionData.append('linkedin_profile', formData.linkedIn.trim() || '');
       
-      // Role interests - send as JSON strings
+      // Role interests - send as JSON strings as expected by backend serializer
       formData.rolesInterested.forEach(role => {
         submissionData.append('role_interests', JSON.stringify({ role }));
       });
       
+      // Experience
       submissionData.append('years_experience', formData.yearsExperience);
-      submissionData.append('industries', formData.industries);
+      submissionData.append('industries', formData.industries.trim());
       submissionData.append('has_team_experience', formData.hasTeamExperience);
-      if (formData.teamSize) {
+      
+      // Convert teamSize to number if it exists
+      if (formData.teamSize && formData.hasTeamExperience === "yes") {
         submissionData.append('team_size', formData.teamSize);
       }
       
-      submissionData.append('bd_approach', formData.bdApproach);
-      submissionData.append('bd_tools', formData.bdTools);
-      submissionData.append('bd_example', formData.bdExample || '');
-      submissionData.append('bd_confidence', formData.bdConfidence);
+      // Business Development
+      submissionData.append('bd_approach', formData.bdApproach.trim());
+      submissionData.append('bd_tools', formData.bdTools.trim());
+      submissionData.append('bd_example', formData.bdExample.trim() || '');
+      if (formData.bdConfidence) {
+        submissionData.append('bd_confidence', formData.bdConfidence);
+      }
       
-      submissionData.append('am_approach', formData.amApproach);
-      submissionData.append('am_challenges', formData.amChallenges);
-      submissionData.append('am_experience', formData.amExperience || '');
-      submissionData.append('am_confidence', formData.amConfidence);
+      // Account Management
+      submissionData.append('am_approach', formData.amApproach.trim());
+      submissionData.append('am_challenges', formData.amChallenges.trim());
+      submissionData.append('am_experience', formData.amExperience.trim() || '');
+      if (formData.amConfidence) {
+        submissionData.append('am_confidence', formData.amConfidence);
+      }
       
-      submissionData.append('sm_experience', formData.smExperience || '');
-      submissionData.append('sm_performance', formData.smPerformance || '');
-      submissionData.append('sm_tools', formData.smTools || '');
+      // Sales Management
+      submissionData.append('sm_experience', formData.smExperience.trim() || '');
+      submissionData.append('sm_performance', formData.smPerformance.trim() || '');
+      submissionData.append('sm_tools', formData.smTools.trim() || '');
       if (formData.smConfidence) {
         submissionData.append('sm_confidence', formData.smConfidence);
       }
       
-      submissionData.append('achievements', formData.achievements);
-      submissionData.append('targets', formData.targets || '');
-      submissionData.append('awards', formData.awards || '');
+      // Performance
+      submissionData.append('achievements', formData.achievements.trim());
+      submissionData.append('targets', formData.targets.trim() || '');
+      submissionData.append('awards', formData.awards.trim() || '');
       
+      // Education
       submissionData.append('education', formData.education);
-      submissionData.append('certifications', formData.certifications || '');
+      submissionData.append('certifications', formData.certifications.trim() || '');
       
+      // File upload
       if (formData.resumeFile) {
         submissionData.append('resume', formData.resumeFile);
       }
       
+      // Consent
       submissionData.append('consent', formData.consent.toString());
 
       // Debug: Log what's being sent
-      console.log('Submitting role interests:', formData.rolesInterested);
-      for (let pair of (submissionData as any).entries()) {
-        console.log(pair[0], pair[1]);
+      console.log('=== FORM DATA BEING SENT ===');
+      console.log('Role interests being sent:', formData.rolesInterested);
+      for (let [key, value] of (submissionData as any).entries()) {
+        console.log(`${key}:`, value);
       }
-
-      // Get CSRF token first
-      await fetchCsrfToken();
+      console.log('=== END FORM DATA ===');
 
       let url = `${API_BASE_URL}/api/sales-capability/submissions/`;
       let method = "POST";
@@ -359,43 +422,63 @@ const CapabilityForm = () => {
         method: method,
         headers: {
           "Authorization": `Bearer ${token}`,
-          "X-CSRFToken": getCookie("csrftoken") || "",
-          // Don't set Content-Type for FormData - let browser set it with boundary
+          "X-CSRFToken": csrfToken,
         },
         body: submissionData,
         credentials: "include",
       });
 
-      // Check if response is JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error("Non-JSON response:", text.substring(0, 200));
-        toast.error("Server error: Check API endpoint configuration.");
-        return;
+      // Handle response
+      if (!response.ok) {
+        // Try to parse error response
+        let errorData;
+        const contentType = response.headers.get("content-type");
+        
+        if (contentType && contentType.includes("application/json")) {
+          errorData = await response.json();
+        } else {
+          const text = await response.text();
+          throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+        }
+        
+        // Handle validation errors
+        console.error('Backend validation errors:', errorData);
+        
+        if (errorData.non_field_errors) {
+          throw new Error(errorData.non_field_errors.join(' '));
+        } else if (errorData.role_interests) {
+          throw new Error(`Role interests: ${Array.isArray(errorData.role_interests) ? errorData.role_interests.join(', ') : errorData.role_interests}`);
+        } else {
+          // Format field errors
+          const fieldErrors = Object.entries(errorData)
+            .map(([field, errors]) => {
+              if (Array.isArray(errors)) {
+                return `${field}: ${errors.join(', ')}`;
+              }
+              return `${field}: ${errors}`;
+            })
+            .join('; ');
+          throw new Error(fieldErrors || `Submission failed with status ${response.status}`);
+        }
       }
 
       const data = await response.json();
-
-      if (!response.ok) {
-        // Handle validation errors
-        if (data.non_field_errors) {
-          toast.error(data.non_field_errors.join(' '));
-        } else if (data.role_interests) {
-          toast.error(`Role interests error: ${data.role_interests.join(' ')}`);
-        } else {
-          const errorMsg = Object.values(data).flat().join(" ") || "Submission failed!";
-          toast.error(errorMsg);
-        }
-        return;
-      }
+      console.log('Submission successful:', data);
 
       toast.success(isEditing ? "Form updated successfully!" : "Form submitted successfully!");
-      navigate("/recruitment/user-dashboard");
+      
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        navigate("/recruitment/user-dashboard");
+      }, 1500);
       
     } catch (error) {
       console.error("Submission error:", error);
-      toast.error("Something went wrong. Please try again.");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -455,6 +538,7 @@ const CapabilityForm = () => {
                           required 
                           value={formData.fullName}
                           onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                          placeholder="John Doe"
                         />
                       </div>
                       <div>
@@ -465,6 +549,7 @@ const CapabilityForm = () => {
                           required 
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          placeholder="john.doe@example.com"
                         />
                       </div>
                       <div>
@@ -475,6 +560,7 @@ const CapabilityForm = () => {
                           required 
                           value={formData.phone}
                           onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          placeholder="+254700000000"
                         />
                       </div>
                       <div>
@@ -571,6 +657,8 @@ const CapabilityForm = () => {
                           placeholder="e.g., 5"
                           value={formData.teamSize}
                           onChange={(e) => setFormData({...formData, teamSize: e.target.value})}
+                          min="1"
+                          max="100"
                         />
                       </div>
                     )}
@@ -608,6 +696,7 @@ const CapabilityForm = () => {
                         id="bdTools" 
                         required 
                         rows={3}
+                        placeholder="CRM systems, networking events, social media, etc."
                         value={formData.bdTools}
                         onChange={(e) => setFormData({...formData, bdTools: e.target.value})}
                       />
@@ -617,6 +706,7 @@ const CapabilityForm = () => {
                       <Textarea 
                         id="bdExample" 
                         rows={4}
+                        placeholder="Describe a specific success story..."
                         value={formData.bdExample}
                         onChange={(e) => setFormData({...formData, bdExample: e.target.value})}
                       />
@@ -652,6 +742,7 @@ const CapabilityForm = () => {
                         id="amApproach" 
                         required 
                         rows={4}
+                        placeholder="How do you build and maintain client relationships?"
                         value={formData.amApproach}
                         onChange={(e) => setFormData({...formData, amApproach: e.target.value})}
                       />
@@ -662,6 +753,7 @@ const CapabilityForm = () => {
                         id="amChallenges" 
                         required 
                         rows={3}
+                        placeholder="Your strategy for turning around challenging accounts"
                         value={formData.amChallenges}
                         onChange={(e) => setFormData({...formData, amChallenges: e.target.value})}
                       />
@@ -671,6 +763,7 @@ const CapabilityForm = () => {
                       <Textarea 
                         id="amExperience" 
                         rows={3}
+                        placeholder="Describe your experience with strategic account planning"
                         value={formData.amExperience}
                         onChange={(e) => setFormData({...formData, amExperience: e.target.value})}
                       />
@@ -705,6 +798,7 @@ const CapabilityForm = () => {
                       <Textarea 
                         id="smExperience" 
                         rows={4}
+                        placeholder="Your experience leading sales teams or managing distributor relationships"
                         value={formData.smExperience}
                         onChange={(e) => setFormData({...formData, smExperience: e.target.value})}
                       />
@@ -714,6 +808,7 @@ const CapabilityForm = () => {
                       <Textarea 
                         id="smPerformance" 
                         rows={3}
+                        placeholder="Your methods for motivating and tracking team performance"
                         value={formData.smPerformance}
                         onChange={(e) => setFormData({...formData, smPerformance: e.target.value})}
                       />
@@ -723,6 +818,7 @@ const CapabilityForm = () => {
                       <Textarea 
                         id="smTools" 
                         rows={3}
+                        placeholder="CRM, analytics tools, reporting systems, etc."
                         value={formData.smTools}
                         onChange={(e) => setFormData({...formData, smTools: e.target.value})}
                       />
@@ -759,9 +855,9 @@ const CapabilityForm = () => {
                         id="achievements" 
                         required 
                         rows={4}
-                        placeholder="1. 
-2. 
-3. "
+                        placeholder="1. Increased sales by 30% in Q2 2023
+2. Secured key account worth $500K annually
+3. Received Sales Excellence Award 2022"
                         value={formData.achievements}
                         onChange={(e) => setFormData({...formData, achievements: e.target.value})}
                       />
@@ -771,6 +867,7 @@ const CapabilityForm = () => {
                       <Textarea 
                         id="targets" 
                         rows={3}
+                        placeholder="e.g., Consistently achieved 110% of sales targets, Grew territory revenue by 25% YoY"
                         value={formData.targets}
                         onChange={(e) => setFormData({...formData, targets: e.target.value})}
                       />
@@ -780,6 +877,7 @@ const CapabilityForm = () => {
                       <Textarea 
                         id="awards" 
                         rows={2}
+                        placeholder="e.g., Salesperson of the Year 2023, President's Club Award"
                         value={formData.awards}
                         onChange={(e) => setFormData({...formData, awards: e.target.value})}
                       />
@@ -822,7 +920,7 @@ const CapabilityForm = () => {
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold border-b pb-2">Resume/CV Upload</h3>
                     <div>
-                      <Label htmlFor="resume">Upload your Resume/CV (PDF or DOCX)</Label>
+                      <Label htmlFor="resume">Upload your Resume/CV (PDF or DOCX, max 5MB)</Label>
                       <Input 
                         id="resume" 
                         type="file" 
@@ -831,8 +929,8 @@ const CapabilityForm = () => {
                         className="cursor-pointer"
                       />
                       {formData.resumeFile && (
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Selected: {formData.resumeFile.name}
+                        <p className="text-sm text-green-600 mt-2">
+                          ✓ Selected: {formData.resumeFile.name}
                         </p>
                       )}
                       {isEditing && !formData.resumeFile && (
@@ -861,10 +959,57 @@ const CapabilityForm = () => {
                   </div>
                   )}
 
+                  {/* Step 7: Review & Submit */}
+                  {currentStep === 7 && (
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold border-b pb-2">Review Your Submission</h3>
+                      
+                      <div className="space-y-4">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-blue-800 mb-2">Before submitting, please review:</h4>
+                          <ul className="text-sm text-blue-700 space-y-1">
+                            <li>✓ All required fields are completed</li>
+                            <li>✓ Your contact information is correct</li>
+                            <li>✓ Your achievements and experience are accurately described</li>
+                            <li>✓ You have provided consent for data processing</li>
+                          </ul>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <strong>Personal Information:</strong>
+                            <p>Name: {formData.fullName}</p>
+                            <p>Email: {formData.email}</p>
+                            <p>Phone: {formData.phone}</p>
+                            <p>Location: {formData.location}</p>
+                          </div>
+                          <div>
+                            <strong>Role Interest:</strong>
+                            <p>Roles: {formData.rolesInterested.join(", ")}</p>
+                            <p>Experience: {formData.yearsExperience} years</p>
+                            <p>Industries: {formData.industries}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start space-x-2 bg-yellow-50 p-4 rounded-lg">
+                          <Checkbox 
+                            id="final-consent" 
+                            checked={formData.consent}
+                            onCheckedChange={(checked) => setFormData({...formData, consent: checked as boolean})}
+                          />
+                          <label htmlFor="final-consent" className="text-sm cursor-pointer leading-relaxed">
+                            <strong>Final Confirmation:</strong> I have reviewed all information and confirm it is accurate. 
+                            I consent to my data being used for recruitment purposes. *
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Navigation Buttons */}
                   <div className="flex justify-between pt-6 border-t">
                     {currentStep > 1 ? (
-                      <Button type="button" variant="outline" onClick={handlePrevious}>
+                      <Button type="button" variant="outline" onClick={handlePrevious} disabled={isSubmitting}>
                         <ChevronLeft className="mr-2 h-4 w-4" />
                         Previous
                       </Button>
@@ -873,19 +1018,27 @@ const CapabilityForm = () => {
                         type="button" 
                         variant="outline" 
                         onClick={() => navigate("/recruitment/user-dashboard")}
+                        disabled={isSubmitting}
                       >
                         Cancel
                       </Button>
                     )}
                     
                     {currentStep < totalSteps ? (
-                      <Button type="button" onClick={handleNext}>
+                      <Button type="button" onClick={handleNext} disabled={isSubmitting}>
                         Next
                         <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button type="submit" size="lg" disabled={isSubmitting}>
-                        {isSubmitting ? "Submitting..." : isEditing ? "Update Application" : "Submit Application"}
+                      <Button type="submit" size="lg" disabled={isSubmitting || !formData.consent}>
+                        {isSubmitting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            {isEditing ? "Updating..." : "Submitting..."}
+                          </>
+                        ) : (
+                          isEditing ? "Update Application" : "Submit Application"
+                        )}
                       </Button>
                     )}
                   </div>

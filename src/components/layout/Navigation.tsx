@@ -18,13 +18,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import logo from "@/assets/logo.jpg";
+const logo = "/logo.jpg";
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -34,14 +33,8 @@ const Navigation = () => {
       const token = localStorage.getItem('access_token');
       const user = localStorage.getItem('user_data');
       setIsLoggedIn(!!token);
-      
       if (user) {
-        const userData = JSON.parse(user);
-        setUserData(userData);
-        
-        // Check if user is admin
-        const adminStatus = userData.is_staff || userData.is_superuser || userData.role === 'admin';
-        setIsAdmin(adminStatus);
+        setUserData(JSON.parse(user));
       }
     };
 
@@ -57,7 +50,7 @@ const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Handle navigation based on auth status and user role
+  // Handle navigation based on auth status
   const handleRecruitmentClick = (e: React.MouseEvent) => {
     if (!isLoggedIn) {
       e.preventDefault();
@@ -68,53 +61,39 @@ const Navigation = () => {
 
   const handleAuthButtonClick = () => {
     if (isLoggedIn) {
-      if (isAdmin) {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/recruitment/user-dashboard');
-      }
+      navigate('/recruitment/user-dashboard');
     } else {
       navigate('/register');
     }
     setMobileMenuOpen(false);
   };
 
-  // Enhanced logout function
+  // Handle logout
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const refreshToken = localStorage.getItem('refresh_token');
-
-      // Call your logout endpoint with both tokens
+      // Call your logout endpoint
       const response = await fetch('/api/accounts/auth/logout/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
-        body: JSON.stringify({
-          refresh_token: refreshToken
-        })
       });
 
-      // Even if the API call fails, we'll clear local storage
-      // Clear local storage regardless of API response
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_data');
-      
-      // Update state
-      setIsLoggedIn(false);
-      setUserData(null);
-      setIsAdmin(false);
-      
-      // Redirect to home page
-      navigate('/');
-      setMobileMenuOpen(false);
-
-      // Optional: Show success message
-      console.log('Logged out successfully');
-
+      if (response.ok) {
+        // Clear local storage
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_data');
+        
+        // Update state
+        setIsLoggedIn(false);
+        setUserData(null);
+        
+        // Redirect to home page
+        navigate('/');
+        setMobileMenuOpen(false);
+      }
     } catch (error) {
       console.error('Logout error:', error);
       // Still clear local storage even if API call fails
@@ -123,7 +102,6 @@ const Navigation = () => {
       localStorage.removeItem('user_data');
       setIsLoggedIn(false);
       setUserData(null);
-      setIsAdmin(false);
       navigate('/');
       setMobileMenuOpen(false);
     }
@@ -131,23 +109,13 @@ const Navigation = () => {
 
   // Handle profile navigation
   const handleProfileClick = () => {
-    if (isAdmin) {
-      navigate('/admin/profile');
-    } else {
-      navigate('/recruitment/user-profile');
-    }
+    navigate('/recruitment/user-profile');
     setMobileMenuOpen(false);
   };
 
-  // Handle admin dashboard navigation
-  const handleAdminDashboardClick = () => {
-    navigate('/admin/dashboard');
-    setMobileMenuOpen(false);
-  };
-
-  // Handle user dashboard navigation
-  const handleUserDashboardClick = () => {
-    navigate('/recruitment/user-dashboard');
+  // Handle settings navigation
+  const handleSettingsClick = () => {
+    navigate('/recruitment/settings');
     setMobileMenuOpen(false);
   };
 
@@ -249,33 +217,15 @@ const Navigation = () => {
               </NavigationMenuList>
             </NavigationMenu>
 
-            {/* Recruitment Hub with auth check - only show for non-admin users */}
-            {!isAdmin && (
-              <Link
-                to={isLoggedIn ? "/recruitment" : "/register"}
-                onClick={!isLoggedIn ? (e) => {
-                  e.preventDefault();
-                  navigate('/register');
-                } : undefined}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive("/recruitment") ? "text-primary" : "text-foreground"
-                }`}
-              >
-                Recruitment Hub
-              </Link>
-            )}
-
-            {/* Admin Dashboard link for admin users */}
-            {isAdmin && (
-              <Link
-                to="/admin/dashboard"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive("/admin/dashboard") ? "text-primary" : "text-foreground"
-                }`}
-              >
-                Admin Dashboard
-              </Link>
-            )}
+            {/* Recruitment Hub with auth check */}
+            <Link
+              to="/recruitment"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/recruitment") ? "text-primary" : "text-foreground"
+              }`}
+            >
+              Recruitment Hub
+            </Link>
             
             <Link
               to="/team"
@@ -319,49 +269,29 @@ const Navigation = () => {
                   <Button variant="outline" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
                     {userData?.first_name || userData?.username || "Profile"}
-                    {isAdmin && <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 rounded">Admin</span>}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        {userData?.first_name && userData?.last_name 
-                          ? `${userData.first_name} ${userData.last_name}`
-                          : userData?.username || "My Account"
-                        }
-                        {isAdmin && (
-                          <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
-                            Admin
-                          </span>
-                        )}
-                      </div>
-                      {userData?.email && (
-                        <p className="text-xs font-normal text-muted-foreground mt-1">
-                          {userData.email}
-                        </p>
-                      )}
-                    </div>
+                    {userData?.first_name && userData?.last_name 
+                      ? `${userData.first_name} ${userData.last_name}`
+                      : userData?.username || "My Account"
+                    }
+                    {userData?.email && (
+                      <p className="text-xs font-normal text-muted-foreground mt-1">
+                        {userData.email}
+                      </p>
+                    )}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  
-                  {/* Dashboard option based on role */}
-                  {isAdmin ? (
-                    <DropdownMenuItem onClick={handleAdminDashboardClick}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Admin Dashboard
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={handleUserDashboardClick}>
-                      <User className="h-4 w-4 mr-2" />
-                      My Dashboard
-                    </DropdownMenuItem>
-                  )}
-                  
                   <DropdownMenuItem onClick={handleProfileClick}>
                     <User className="h-4 w-4 mr-2" />
                     Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSettingsClick}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
@@ -415,25 +345,15 @@ const Navigation = () => {
               Products & Services
             </Link>
             
-            {/* Mobile Recruitment Hub / Admin Dashboard */}
+            {/* Mobile Recruitment Hub with auth check */}
             {isLoggedIn ? (
-              isAdmin ? (
-                <Link
-                  to="/admin/dashboard"
-                  className="block py-2 text-sm font-medium hover:text-primary"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Admin Dashboard
-                </Link>
-              ) : (
-                <Link
-                  to="/recruitment"
-                  className="block py-2 text-sm font-medium hover:text-primary"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Recruitment Hub
-                </Link>
-              )
+              <Link
+                to="/recruitment"
+                className="block py-2 text-sm font-medium hover:text-primary"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Recruitment Hub
+              </Link>
             ) : (
               <button
                 onClick={handleRecruitmentClick}
@@ -477,36 +397,8 @@ const Navigation = () => {
               {isLoggedIn ? (
                 <div className="space-y-2">
                   <div className="px-2 py-1 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      Welcome, {userData?.first_name || userData?.username || "User"}!
-                      {isAdmin && (
-                        <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
-                          Admin
-                        </span>
-                      )}
-                    </div>
+                    Welcome, {userData?.first_name || userData?.username || "User"}!
                   </div>
-                  
-                  {isAdmin ? (
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={handleAdminDashboardClick}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Admin Dashboard
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={handleUserDashboardClick}
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      My Dashboard
-                    </Button>
-                  )}
-                  
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
@@ -514,6 +406,13 @@ const Navigation = () => {
                   >
                     <User className="h-4 w-4 mr-2" />
                     Profile
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={handleSettingsClick}
+                  >
+                   
                   </Button>
                   <Button 
                     variant="destructive" 
