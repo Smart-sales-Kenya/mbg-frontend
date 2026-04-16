@@ -10,6 +10,8 @@ import PasswordResetConfirm from './components/PasswordResetConfirm';
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Programs from "./pages/Programs";
+import ProgramDetails from "./pages/ProgramDetails";
+
 import RegisterProgram from "./pages/RegisterProgram";
 // import Recruitment from "./pages/Recruitment";
 import Team from "./pages/Team";
@@ -61,7 +63,9 @@ const App = () => (
           
           {/* Programs Routes */}
           <Route path="/programs" element={<Programs />} />
-          <Route path="/register-program" element={<RegisterProgram />} />
+          <Route path="/programs/:id" element={<ProgramDetails />} />
+
+          <Route path="/programs/:id/register" element={<RegisterProgram />} />
           <Route path="/program-payment-result" element={<ProgramPaymentResult />} />
           
           {/* Events Routes - Specific first */}

@@ -71,29 +71,42 @@ const Navigation = () => {
   // Handle logout
   const handleLogout = async () => {
     try {
-      // Call your logout endpoint
-      const response = await fetch('/api/accounts/auth/logout/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-      });
-
-      if (response.ok) {
-        // Clear local storage
+      const token = localStorage.getItem('access_token');
+      
+      // If no token exists, just clear state and redirect
+      if (!token) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('user_data');
-        
-        // Update state
         setIsLoggedIn(false);
         setUserData(null);
-        
-        // Redirect to home page
         navigate('/');
         setMobileMenuOpen(false);
+        return;
       }
+
+      // Call your logout endpoint
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+      const response = await fetch(`${apiBaseUrl}/accounts/auth/logout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      // Clear local storage regardless of response status
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_data');
+      
+      // Update state
+      setIsLoggedIn(false);
+      setUserData(null);
+      
+      // Redirect to home page
+      navigate('/');
+      setMobileMenuOpen(false);
     } catch (error) {
       console.error('Logout error:', error);
       // Still clear local storage even if API call fails
@@ -289,10 +302,7 @@ const Navigation = () => {
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSettingsClick}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </DropdownMenuItem>
+                  
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleLogout}
@@ -305,7 +315,7 @@ const Navigation = () => {
               </DropdownMenu>
             ) : (
               <Button variant="hero" onClick={handleAuthButtonClick}>
-                Register
+                Work with Us              
               </Button>
             )}
           </div>
@@ -429,7 +439,7 @@ const Navigation = () => {
                   className="w-full" 
                   onClick={handleAuthButtonClick}
                 >
-                  Register
+                Work with Us              
                 </Button>
               )}
             </div>

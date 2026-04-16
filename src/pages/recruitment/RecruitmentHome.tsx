@@ -125,11 +125,7 @@ useEffect(() => {
                 >
                   Complete Your Profile
                 </Button>
-                <Link to="/recruitment/roles">
-                  <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10">
-                    Explore Available Roles
-                  </Button>
-                </Link>
+                
               </div>
             </div>
           </div>
@@ -138,7 +134,7 @@ useEffect(() => {
         {/* Quick Actions for Logged In Users */}
         <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-1 gap-8 max-w-4xl mx-auto">
               <Card className="text-center shadow-elegant hover:shadow-hover transition-all">
                 <CardHeader>
                   <CardTitle className="text-2xl mb-2">Your Profile</CardTitle>
@@ -156,21 +152,7 @@ useEffect(() => {
                 </CardContent>
               </Card>
               
-              <Card className="text-center shadow-elegant hover:shadow-hover transition-all">
-                <CardHeader>
-                  <CardTitle className="text-2xl mb-2">Role Matches</CardTitle>
-                  <CardDescription>
-                    View opportunities that match your skills and experience
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link to="/recruitment/roles" className="w-full">
-                    <Button className="w-full" variant="outline">
-                      View Matches
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+              
             </div>
           </div>
         </section>
@@ -204,11 +186,7 @@ useEffect(() => {
               >
                 Start Now
               </Button>
-              <Link to="/recruitment/roles">
-                <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10">
-                  Explore Roles
-                </Button>
-              </Link>
+              
             </div>
           </div>
         </div>

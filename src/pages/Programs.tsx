@@ -14,18 +14,19 @@ interface ProgramCategory {
 }
 
 interface Program {
-  id: string;  // Changed from number to string to match your CharField
+  id: string;
   title: string;
   category: ProgramCategory;
   duration: string;
   price: string;
   description: string;
-  focus: string;  // Made required since model has default=''
-  outcome: string; // Made required since model has default=''
-  skills: string;  // Made required since model has default=''
-  format: string;  // Made required since model has default=''
-  badge: string;   // Made required since model has default='OpenBook'
-  icon_name?: string; // Optional since it's not in your model
+  focus: string;
+  outcome: string;
+  skills: string;
+  format: string;
+  badge: string;
+  is_custom: boolean; // Make sure this is coming from your API
+  icon_name?: string;
   features?: { id: number; description: string }[];
 }
 
@@ -40,7 +41,6 @@ const iconMap: Record<string, any> = {
   GraduationCap
 };
 
-// ✅ Use .env variable
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Programs = () => {
@@ -53,6 +53,7 @@ const Programs = () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/program/list/`);
         const data: Program[] = await res.json();
+        console.log("Fetched programs:", data); // Debug log to check if is_custom exists
         setPrograms(data);
       } catch (err) {
         console.error("Failed to fetch programs:", err);
@@ -64,16 +65,9 @@ const Programs = () => {
     fetchPrograms();
   }, []);
 
-  const handleRegisterClick = (program: Program) => {
-    // Navigate to program registration page with program data
-    navigate('/register-program', {
-      state: {
-        program: program
-      }
-    });
+  const handleProgramClick = (program: Program) => {
+    navigate(`/programs/${program.id}`);
   };
-
-  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -102,6 +96,10 @@ const Programs = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {programs.map((program) => {
               const Icon = program.icon_name ? iconMap[program.icon_name] : BookOpen;
+              
+              // Use is_custom to determine price display
+              const displayPrice = program.is_custom ? "Custom Pricing" : program.price;
+              
               return (
                 <Card key={program.id} className="shadow-elegant hover:shadow-hover transition-all flex flex-col">
                   <CardHeader>
@@ -109,14 +107,20 @@ const Programs = () => {
                       <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Icon className="h-6 w-6 text-primary" />
                       </div>
-                      {program.badge && program.badge !== 'OpenBook' && (
-                        <Badge variant="secondary">{program.badge}</Badge>
+                      {/* Show "Custom" badge if program is custom, otherwise show the regular badge */}
+                      {program.is_custom ? (
+                        <Badge variant="secondary">Custom</Badge>
+                      ) : (
+                        program.badge && program.badge !== 'OpenBook' && (
+                          <Badge variant="secondary">{program.badge}</Badge>
+                        )
                       )}
                     </div>
                     <CardTitle className="text-xl mb-2">{program.title}</CardTitle>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{program.duration}</span>
-                      <span className="text-accent font-bold">{program.price}</span>
+                      {/* Display "Custom Pricing" if is_custom is true */}
+                      <span className="text-accent font-bold">{displayPrice}</span>
                     </div>
                   </CardHeader>
 
@@ -155,9 +159,9 @@ const Programs = () => {
                       <Button 
                         variant="default" 
                         className="w-full" 
-                        onClick={() => handleRegisterClick(program)}
+                        onClick={() => handleProgramClick(program)}
                       >
-                        Register Now
+                        View Details
                       </Button>
                     </div>
                   </CardContent>

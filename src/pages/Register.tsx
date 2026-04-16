@@ -16,10 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
-// Environment variable for API base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Helper: get CSRF token
+// Helper: get CSRF token from cookies
 function getCookie(name: string) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -28,6 +27,7 @@ function getCookie(name: string) {
 
 const Register = () => {
   const [authMode, setAuthMode] = useState<"login" | "register" | "reset">("login");
+  const [loading, setLoading] = useState(false);
   const [authData, setAuthData] = useState({
     username: "",
     email: "",
@@ -35,9 +35,8 @@ const Register = () => {
     confirmPassword: "",
     role: "job_seeker",
   });
-  const [loading, setLoading] = useState(false);
 
-  // Fetch CSRF token
+  // ---------------- CSRF ----------------
   const fetchCsrfToken = async () => {
     try {
       await fetch(`${API_BASE_URL}/api/get-csrf-token/`, {
@@ -48,9 +47,10 @@ const Register = () => {
     }
   };
 
-  // --- Register User ---
+  // ---------------- REGISTER ----------------
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (authData.password !== authData.confirmPassword) {
       toast.error("Passwords do not match!");
       return;
@@ -63,7 +63,7 @@ const Register = () => {
     setLoading(true);
     try {
       await fetchCsrfToken();
-      
+
       const response = await fetch(`${API_BASE_URL}/accounts/auth/registration/`, {
         method: "POST",
         headers: {
@@ -80,35 +80,23 @@ const Register = () => {
         credentials: "include",
       });
 
-      // Check if response is HTML (404 page) instead of JSON
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text();
         console.error("Non-JSON response:", text.substring(0, 200));
-        toast.error("Server error: Endpoint not found. Check URL configuration.");
+        toast.error("Server error: Endpoint not found.");
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle different types of errors
-        if (data.username) {
-          toast.error(`Username error: ${data.username.join(' ')}`);
-        } else if (data.email) {
-          toast.error(`Email error: ${data.email.join(' ')}`);
-        } else if (data.password1) {
-          toast.error(`Password error: ${data.password1.join(' ')}`);
-        } else if (data.non_field_errors) {
-          toast.error(data.non_field_errors.join(' '));
-        } else {
-          const errorMsg = Object.values(data).flat().join(" ") || "Registration failed!";
-          toast.error(errorMsg);
-        }
+        const errorMsg = Object.values(data).flat().join(" ") || "Registration failed!";
+        toast.error(errorMsg);
         return;
       }
 
-      toast.success("Account created successfully! Please check your email for verification.");
+      toast.success("Account created! Check your email for verification.");
       setAuthMode("login");
       setAuthData({ username: "", email: "", password: "", confirmPassword: "", role: "job_seeker" });
     } catch (error) {
@@ -119,88 +107,54 @@ const Register = () => {
     }
   };
 
-  // --- Login User (Using JWT Token Endpoint) ---
+  // ---------------- LOGIN ----------------
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/token/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: authData.email,
-          password: authData.password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authData.email, password: authData.password }),
       });
 
-      // Check if response is JSON
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text();
         console.error("Non-JSON response:", text.substring(0, 200));
-        toast.error("Server error: Check API endpoint configuration.");
+        toast.error("Server error: Check API endpoint.");
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        // If email fails, try with username
+        // Try login with username if email fails
         if (data.detail && data.detail.includes("credentials")) {
           const retryResponse = await fetch(`${API_BASE_URL}/api/token/`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              username: authData.email,
-              password: authData.password,
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: authData.email, password: authData.password }),
           });
-
           const retryData = await retryResponse.json();
-
           if (!retryResponse.ok) {
-            toast.error(retryData.detail || "Login failed! Check your credentials.");
+            toast.error(retryData.detail || "Login failed! Check credentials.");
             return;
           }
-
-          // Success with username fallback
-          if (retryData.access) {
-            localStorage.setItem('access_token', retryData.access);
-            
-            // Fetch and store user data immediately
-            await fetchAndStoreUserData(retryData.access);
-          }
-          if (retryData.refresh) {
-            localStorage.setItem('refresh_token', retryData.refresh);
-          }
-
-          toast.success("Logged in successfully!");
-          setAuthData({ username: "", email: "", password: "", confirmPassword: "", role: "job_seeker" });
+          if (retryData.access) localStorage.setItem("access_token", retryData.access);
+          if (retryData.refresh) localStorage.setItem("refresh_token", retryData.refresh);
+          await fetchAndRedirect(retryData.access);
           return;
         }
-        
-        toast.error(data.detail || "Login failed! Check your credentials. Or Verify your email.");
+        toast.error(data.detail || "Login failed! Check credentials.");
         return;
       }
 
-      // Success with email login
-      if (data.access) {
-        localStorage.setItem('access_token', data.access);
-        
-        // Fetch and store user data immediately
-        await fetchAndStoreUserData(data.access);
-      }
-      if (data.refresh) {
-        localStorage.setItem('refresh_token', data.refresh);
-      }
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+      await fetchAndRedirect(data.access);
 
-      toast.success("Logged in successfully!");
-      setAuthData({ username: "", email: "", password: "", confirmPassword: "", role: "job_seeker" });
-      
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Something went wrong. Please try again.");
@@ -209,91 +163,47 @@ const Register = () => {
     }
   };
 
- const fetchAndStoreUserData = async (accessToken: string) => {
-  try {
-    // Fetch user profile to get role - USE THE CORRECT ENDPOINT
-    const userResponse = await fetch(`${API_BASE_URL}/api/get-current-user/`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (userResponse.ok) {
-      const userData = await userResponse.json();
-      
-      // DEBUG: Log user data to see what's being returned
-      console.log('User data from backend:', userData);
-      
-      // Store user data in localStorage
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      // Enhanced admin check - check both is_staff and role
-      const isAdmin = userData.is_staff || userData.is_superuser || userData.role === 'admin';
-      
-      console.log('Admin check result:', {
-        is_staff: userData.is_staff,
-        is_superuser: userData.is_superuser,
-        role: userData.role,
-        final_isAdmin: isAdmin
+  // ---------------- FETCH USER & REDIRECT ----------------
+  const fetchAndRedirect = async (accessToken: string) => {
+    try {
+      const userResponse = await fetch(`${API_BASE_URL}/api/accounts/get-current-user/`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
       });
 
-      // Redirect based on role
-      setTimeout(() => {
-        if (isAdmin) {
-          window.location.href = "/admin/dashboard";
-        } else {
-          window.location.href = "/recruitment/form";
-        }
-      }, 1000);
-    } else {
-      console.error('Failed to fetch user data:', await userResponse.text());
-      // Fallback: redirect to form if user info can't be fetched
-      setTimeout(() => {
-        window.location.href = "/recruitment/form";
-      }, 1000);
-    }
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-    // Fallback: redirect to form
-    setTimeout(() => {
+      if (!userResponse.ok) throw new Error("Failed to fetch user data");
+
+      const userData = await userResponse.json();
+      localStorage.setItem("user_data", JSON.stringify(userData));
+
+      const isAdmin = userData.is_staff || userData.is_superuser || userData.role === "admin";
+      window.location.href = isAdmin ? "/admin/dashboard" : "/recruitment/form";
+
+    } catch (error) {
+      console.error("User fetch error:", error);
       window.location.href = "/recruitment/form";
-    }, 1000);
-  }
-};
-  // --- Password Reset ---
+    }
+  };
+
+  // ---------------- PASSWORD RESET ----------------
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authData.email) {
       toast.error("Please enter your email.");
       return;
     }
-
     setLoading(true);
+
     try {
       await fetchCsrfToken();
       const response = await fetch(`${API_BASE_URL}/accounts/auth/password/reset/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken") || "",
-        },
+        headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") || "" },
         body: JSON.stringify({ email: authData.email }),
         credentials: "include",
       });
 
-      // Check if response is JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error("Non-JSON response:", text.substring(0, 200));
-        toast.error("Server error: Endpoint not found. Check URL configuration.");
-        return;
-      }
-
       const data = await response.json();
-
       if (!response.ok) {
         const errorMsg = Object.values(data).flat().join(" ") || "Password reset failed!";
         toast.error(errorMsg);
@@ -310,36 +220,33 @@ const Register = () => {
     }
   };
 
+  // ---------------- UI ----------------
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
 
-      {/* Hero Section */}
-      <section className="bg-black text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Welcome to Our Platform</h1>
+      {/* Hero */}
+      <section className="bg-black text-white py-20 text-center">
+        <div className="container mx-auto px-4">
+          <h1 className="text-5xl font-bold mb-4">Welcome to Our Platform</h1>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
             Create your account, log in, or reset your password — your journey begins here.
           </p>
         </div>
       </section>
 
-      {/* Auth Forms */}
+      {/* Auth Card */}
       <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-lg mx-auto">
             <Card className="shadow-lg border border-border/50">
               <CardHeader className="text-center">
                 <CardTitle className="text-3xl font-semibold">
-                  {authMode === "login"
-                    ? "Login"
-                    : authMode === "register"
-                    ? "Create an Account"
-                    : "Reset Password"}
+                  {authMode === "login" ? "Login" : authMode === "register" ? "Create Account" : "Reset Password"}
                 </CardTitle>
                 <CardDescription className="text-base mt-2">
                   {authMode === "login"
-                    ? "Enter your email and password to continue"
+                    ? "Enter your email and password"
                     : authMode === "register"
                     ? "Fill in your details to get started"
                     : "Enter your email to receive a reset link"}
@@ -354,139 +261,94 @@ const Register = () => {
                     <TabsTrigger value="reset">Reset Password</TabsTrigger>
                   </TabsList>
 
-                  {/* Login Form */}
+                  {/* Login */}
                   <TabsContent value="login">
                     <form onSubmit={handleLogin} className="space-y-4">
-                      <div>
-                        <Label htmlFor="login-email">Email Address *</Label>
-                        <Input
-                          id="login-email"
-                          type="email"
-                          required
-                          placeholder="you@example.com"
-                          value={authData.email}
-                          onChange={(e) =>
-                            setAuthData({ ...authData, email: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="login-password">Password *</Label>
-                        <Input
-                          id="login-password"
-                          type="password"
-                          required
-                          placeholder="Enter your password"
-                          value={authData.password}
-                          onChange={(e) =>
-                            setAuthData({ ...authData, password: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <Button type="submit" className="bg-black w-full" size="lg" disabled={loading}>
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        required
+                        placeholder="you@example.com"
+                        value={authData.email}
+                        onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                      />
+                      <Label>Password</Label>
+                      <Input
+                        type="password"
+                        required
+                        placeholder="Enter your password"
+                        value={authData.password}
+                        onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                      />
+                      <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? "Logging in..." : "Login"}
                       </Button>
                     </form>
                   </TabsContent>
 
-                  {/* Register Form */}
+                  {/* Register */}
                   <TabsContent value="register">
                     <form onSubmit={handleRegister} className="space-y-4">
-                      <div>
-                        <Label htmlFor="register-username">Username *</Label>
-                        <Input
-                          id="register-username"
-                          type="text"
-                          required
-                          placeholder="eg. JohnDoe"
-                          value={authData.username}
-                          onChange={(e) =>
-                            setAuthData({ ...authData, username: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="register-email">Email Address *</Label>
-                        <Input
-                          id="register-email"
-                          type="email"
-                          required
-                          placeholder="you@example.com"
-                          value={authData.email}
-                          onChange={(e) =>
-                            setAuthData({ ...authData, email: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="user-role">Account Type *</Label>
-                        <select
-                          id="user-role"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
-                          value={authData.role}
-                          onChange={(e) =>
-                            setAuthData({ ...authData, role: e.target.value })
-                          }
-                        >
-                          <option value="job_seeker">Job Seeker</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label htmlFor="register-password">Password *</Label>
-                        <Input
-                          id="register-password"
-                          type="password"
-                          required
-                          minLength={6}
-                          placeholder="Minimum 6 characters"
-                          value={authData.password}
-                          onChange={(e) =>
-                            setAuthData({ ...authData, password: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="confirm-password">Confirm Password *</Label>
-                        <Input
-                          id="confirm-password"
-                          type="password"
-                          required
-                          minLength={6}
-                          placeholder="Re-enter your password"
-                          value={authData.confirmPassword}
-                          onChange={(e) =>
-                            setAuthData({
-                              ...authData,
-                              confirmPassword: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <Button type="submit" className="bg-black w-full" size="lg" disabled={loading}>
+                      <Label>Username</Label>
+                      <Input
+                        type="text"
+                        required
+                        placeholder="JohnDoe"
+                        value={authData.username}
+                        onChange={(e) => setAuthData({ ...authData, username: e.target.value })}
+                      />
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        required
+                        placeholder="you@example.com"
+                        value={authData.email}
+                        onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                      />
+                      <Label>Account Type</Label>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        value={authData.role}
+                        onChange={(e) => setAuthData({ ...authData, role: e.target.value })}
+                      >
+                        <option value="job_seeker">Job Seeker</option>
+                      </select>
+                      <Label>Password</Label>
+                      <Input
+                        type="password"
+                        required
+                        minLength={6}
+                        placeholder="Minimum 6 characters"
+                        value={authData.password}
+                        onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                      />
+                      <Label>Confirm Password</Label>
+                      <Input
+                        type="password"
+                        required
+                        minLength={6}
+                        placeholder="Re-enter password"
+                        value={authData.confirmPassword}
+                        onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
+                      />
+                      <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? "Registering..." : "Create Account"}
                       </Button>
                     </form>
                   </TabsContent>
 
-                  {/* Password Reset Form */}
+                  {/* Reset */}
                   <TabsContent value="reset">
                     <form onSubmit={handlePasswordReset} className="space-y-4">
-                      <div>
-                        <Label htmlFor="reset-email">Email Address *</Label>
-                        <Input
-                          id="reset-email"
-                          type="email"
-                          required
-                          placeholder="you@example.com"
-                          value={authData.email}
-                          onChange={(e) =>
-                            setAuthData({ ...authData, email: e.target.value })
-                          }
-                        />
-                      </div>
-                      <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        required
+                        placeholder="you@example.com"
+                        value={authData.email}
+                        onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                      />
+                      <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? "Sending..." : "Send Reset Link"}
                       </Button>
                     </form>

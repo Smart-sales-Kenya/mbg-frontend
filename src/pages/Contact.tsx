@@ -146,7 +146,7 @@ const Contact = () => {
               title: "Email",
               text: (
                 <>
-                  hannah.loch@smartsales.co.ke<br />
+                  edward@smartsales.co.ke<br />
                 </>
               )
             },

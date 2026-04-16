@@ -17,10 +17,10 @@ interface RegistrationForm {
   email: string;
   phone: string;
   company: string;
-  job_title: string;
-  industry: string;
-  experience_level: string;
-  goals: string;
+  // job_title: string;
+  // industry: string;
+  // experience_level: string;
+  // goals: string;
   heard_about: string;
 }
 
@@ -44,10 +44,10 @@ const EventRegistrationPage: React.FC = () => {
     email: "",
     phone: "",
     company: "",
-    job_title: "",
-    industry: "",
-    experience_level: "beginner",
-    goals: "",
+    // job_title: "",
+    // industry: "",
+    // experience_level: "beginner",
+    // goals: "",
     heard_about: "other",
   });
 
@@ -170,7 +170,7 @@ const EventRegistrationPage: React.FC = () => {
     if (!event) return;
 
     // Validate required fields
-    if (!formData.full_name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.company.trim() || !formData.job_title.trim()) {
+    if (!formData.full_name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.company.trim()) {
       toast.error("Please fill in all required fields.");
       return;
     }
@@ -191,10 +191,10 @@ const EventRegistrationPage: React.FC = () => {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         company: formData.company.trim(),
-        job_title: formData.job_title.trim(),
-        industry: formData.industry.trim() || "",
-        experience_level: formData.experience_level,
-        goals: formData.goals.trim() || "",
+        // job_title: formData.job_title.trim(),
+        // industry: formData.industry.trim() || "",
+        // experience_level: formData.experience_level,
+        // goals: formData.goals.trim() || "",
         heard_about: formData.heard_about,
       };
 
@@ -507,7 +507,7 @@ const EventRegistrationPage: React.FC = () => {
                     disabled={submitting}
                   />
                 </div>
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="job_title">Job Title *</Label>
                   <Input
                     id="job_title"
@@ -518,9 +518,9 @@ const EventRegistrationPage: React.FC = () => {
                     required
                     disabled={submitting}
                   />
-                </div>
+                </div> */}
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="industry">Industry</Label>
                 <Input
                   id="industry"
@@ -530,8 +530,8 @@ const EventRegistrationPage: React.FC = () => {
                   placeholder="Industry"
                   disabled={submitting}
                 />
-              </div>
-              <div className="space-y-2">
+              </div> */}
+              {/* <div className="space-y-2">
                 <Label htmlFor="experience_level">Experience Level</Label>
                 <Select
                   value={formData.experience_level}
@@ -547,13 +547,13 @@ const EventRegistrationPage: React.FC = () => {
                     <SelectItem value="advanced">Advanced (3+ years)</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
             </div>
 
             {/* Additional Info */}
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Additional Information</h3>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="goals">Goals & Expectations</Label>
                 <Textarea
                   id="goals"
@@ -564,7 +564,7 @@ const EventRegistrationPage: React.FC = () => {
                   placeholder="Share your goals and what you hope to learn from this event..."
                   disabled={submitting}
                 />
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <Label htmlFor="heard_about">How did you hear about us?</Label>
                 <Select
